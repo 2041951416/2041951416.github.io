@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄兴抗 - 个人主页</title>
+    <style>
+        /* Reset & Base */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #1a1a2e;
+            background: #f8f9fa;
+            line-height: 1.7;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            padding: 80px 20px 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(233,69,96,0.15) 0%, transparent 70%);
+            top: -100px;
+            right: -100px;
+            border-radius: 50%;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(83,144,217,0.12) 0%, transparent 70%);
+            bottom: -50px;
+            left: -50px;
+            border-radius: 50%;
+        }
+        .hero-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .hero h1 {
+            font-size: 2.4em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero p {
+            font-size: 1.1em;
+            opacity: 0.85;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-tags {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-tags span {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(4px);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        /* Container */
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Sections */
+        section {
+            padding: 60px 0;
+        }
+        section:nth-child(even) { background: #fff; }
+
+        .section-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 32px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #e94560;
+            border-radius: 2px;
+        }
+
+        /* About grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 16px 20px;
+            border: 1px solid #eee;
+        }
+        .info-card .label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .info-card .value {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        /* Skills */
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .skill-tag {
+            background: #e94560;
+            color: #fff;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .skill-tag.soft {
+            background: #0f3460;
+        }
+        .skill-tag.tool {
+            background: #16213e;
+        }
+        .skill-tag.ai {
+            background: #1a8a5c;
+        }
+
+        /* Timeline for projects */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 32px;
+            padding-left: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e94560;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #e94560;
+        }
+        .timeline-date {
+            font-size: 0.85em;
+            color: #e94560;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .timeline-title {
+            font-size: 1.15em;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .timeline-desc {
+            color: #555;
+            font-size: 0.93em;
+            line-height: 1.7;
+        }
+
+        /* Education */
+        .edu-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+        .edu-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+        .edu-info h3 {
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .edu-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Self evaluation */
+        .eval-box {
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+            border-left: 4px solid #e94560;
+            padding: 20px 24px;
+            border-radius: 0 10px 10px 0;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #888;
+            font-size: 0.85em;
+            border-top: 1px solid #eee;
+        }
+        footer a { color: #e94560; font-weight: 500; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8em; }
+            .info-grid { grid-template-columns: 1fr; }
+            section { padding: 40px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+    <div class="hero-avatar">黄</div>
+    <h1>黄兴抗</h1>
+    <p>电子信息工程 · 热爱 AI 与开源 · 持续学习者</p>
+    <div class="hero-tags">
+        <span>南昌师范学院</span>
+        <span>电子信息工程</span>
+        <span>Java / Python</span>
+        <span>AI 学习者</span>
+        <span>开源贡献者</span>
+    </div>
+</section>
+
+<!-- ========== ABOUT ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">个人信息</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">姓名</div>
+                <div class="value">黄兴抗</div>
+            </div>
+            <div class="info-card">
+                <div class="label">出生年月</div>
+                <div class="value">2001.12</div>
+            </div>
+            <div class="info-card">
+                <div class="label">毕业院校</div>
+                <div class="value">南昌师范学院</div>
+            </div>
+            <div class="info-card">
+                <div class="label">专&nbsp;&nbsp;业</div>
+                <div class="value">电子信息工程</div>
+            </div>
+            <div class="info-card">
+                <div class="label">毕业时间</div>
+                <div class="value">2026.6</div>
+            </div>
+            <div class="info-card">
+                <div class="label">政治面貌</div>
+                <div class="value">共青团员</div>
+            </div>
+            <div class="info-card">
+                <div class="label">电&nbsp;&nbsp;话</div>
+                <div class="value">19534991203</div>
+            </div>
+            <div class="info-card">
+                <div class="label">邮&nbsp;&nbsp;箱</div>
+                <div class="value">2041951416@qq.com</div>
+            </div>
+            <div class="info-card">
+                <div class="label">地&nbsp;&nbsp;址</div>
+                <div class="value">江西省赣州市</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== SKILLS ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">专业技能</h2>
+        <div class="skills-list">
+            <span class="skill-tag">Java</span>
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">SSM Framework</span>
+            <span class="skill-tag">MySQL</span>
+            <span class="skill-tag tool">Spring Boot</span>
+            <span class="skill-tag soft">文档优化</span>
+            <span class="skill-tag soft">办公软件</span>
+            <span class="skill-tag ai">AI 辅助开发</span>
+            <span class="skill-tag ai">单片机/嵌入式</span>
+        </div>
+    </div>
+</section>
+
+<!-- ========== PROJECTS ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">项目经历</h2>
+        <div class="timeline">
+
+            <div class="timeline-item">
+                <div class="timeline-date">2025.7 — 2025.9</div>
+                <div class="timeline-title">基于单片机的智能烘干机收割机 <span style="font-size:0.8em;color:#e94560;font-weight:400;">（毕业设计）</span></div>
+                <div class="timeline-desc">
+                    基于单片机设计智能烘干与收割控制系统，整合传感器数据采集与自动控制逻辑，
+                    实现对农作物烘干过程的温度、湿度智能调控及收割机构的自动化控制。
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024.7 — 2024.10</div>
+                <div class="timeline-title">开源之夏 · Koupleless 应用自动拆分模块</div>
+                <div class="timeline-desc">
+                    成功入选开源之夏（OSPP）Koupleless 项目，独立负责"应用自动拆分模块"开发。
+                    在蚂蚁集团 Koupleless 框架下开发 Spring-Boot 应用自动模块化拆分工具，
+                    包含依赖分析、代码拆分等 3 个核心模块，完成开发并获项目证书及奖金。
+                    项目后进行社区技术分享并撰写使用文档。
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024.3 — 2024.6</div>
+                <div class="timeline-title">Koupleless 开源社区贡献</div>
+                <div class="timeline-desc">
+                    参与蚂蚁集团开源项目 Koupleless 社区建设，累计关闭 Issue 21 个，
+                    PR 合并率 100%。在社区中积极反馈问题、提交代码修复与功能改进。
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ========== CAMPUS ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">校园经历</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">职务</div>
+                <div class="value">组织委员</div>
+                <div style="font-size:0.85em;color:#888;margin-top:4px;">组织班级日常事务及文体活动</div>
+            </div>
+            <div class="info-card">
+                <div class="label">荣誉</div>
+                <div class="value">校级奖学金</div>
+                <div style="font-size:0.85em;color:#888;margin-top:4px;">成绩优异，综合素质突出</div>
+            </div>
+            <div class="info-card">
+                <div class="label">兴趣</div>
+                <div class="value">AI 学习探索</div>
+                <div style="font-size:0.85em;color:#888;margin-top:4px;">善于用 AI 工具提升学习与开发效率</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== EDUCATION ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">教育背景</h2>
+        <div class="edu-item">
+            <div class="edu-icon">🎓</div>
+            <div class="edu-info">
+                <h3>南昌师范学院</h3>
+                <p>电子信息工程 · 本科 · 2022 — 2026</p>
+                <p style="margin-top:6px;color:#888;font-size:0.85em;">
+                    主修课程：单片机原理、嵌入式系统、C/Java/Python 编程、数据库原理
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== SELF EVAL ========== -->
+<section>
+    <div class="container">
+        <h2 class="section-title">自我评价</h2>
+        <div class="eval-box">
+            工作认真负责，细致谨慎，善于在工作中发现问题、分析问题并解决问题。<br>
+            具备较强的学习能力和自驱力，勤奋好学、踏实肯干，热爱迎接新的挑战。<br>
+            为人谦虚友好，做事细心，有较强的责任心和团队协作精神，<br>
+            具备良好的沟通能力和抗压能力。
+        </div>
+    </div>
+</section>
+
+<!-- ========== CONTACT ========== -->
+<section>
+    <div class="container" style="text-align:center;">
+        <h2 class="section-title" style="text-align:left;">联系我</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-top:20px;">
+            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
+                <div style="font-size:0.8em;color:#888;">邮箱</div>
+                <div style="font-weight:600;">2041951416@qq.com</div>
+            </div>
+            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
+                <div style="font-size:0.8em;color:#888;">电话</div>
+                <div style="font-weight:600;">19534991203</div>
+            </div>
+            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
+                <div style="font-size:0.8em;color:#888;">GitHub</div>
+                <div style="font-weight:600;">
+                    <a href="https://github.com/2041951416" target="_blank" style="color:#e94560;">2041951416</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    © 2026 黄兴抗 · Built with ❤️
+    <br><span style="font-size:0.8em;opacity:0.7;">Powered by GitHub Pages</span>
+</footer>
+
+</body>
+</html>

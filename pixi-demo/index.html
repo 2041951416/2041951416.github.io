@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixiJS 交互展示 - 黄兴抗</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+        }
+        canvas { display: block; }
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 14px;
+            z-index: 10;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s;
+        }
+        .back-link:hover {
+            color: #fff;
+            border-color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.05);
+        }
+        .hint {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="https://2041951416.github.io">← 返回主页</a>
+    <div class="hint">移动鼠标 / 点击屏幕 试试 ✨</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.x/dist/pixi.min.js"></script>
+    <script>
+        (async () => {
+            const app = new PIXI.Application();
+            await app.init({
+                resizeTo: window,
+                background: '#0a0a1a',
+                antialias: true,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+            });
+            document.body.prepend(app.canvas);
+
+            const { width: W, height: H } = app.screen;
+            const centerX = W / 2;
+            const centerY = H / 2;
+
+            // ===== 鼠标跟踪 =====
+            let mouseX = centerX;
+            let mouseY = centerY;
+            let mouseClicked = false;
+
+            globalThis.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            globalThis.addEventListener('click', () => {
+                mouseClicked = true;
+                setTimeout(() => mouseClicked = false, 300);
+            });
+
+            // ===== 粒子系统 =====
+            const particles = [];
+            for (let i = 0; i < 120; i++) {
+                const p = new PIXI.Graphics();
+                const size = Math.random() * 3 + 1;
+                const hue = Math.random() * 60 + 200; // blue-purple range
+                const color = hslToHex(hue, 80, 60);
+                p.beginFill(color, Math.random() * 0.5 + 0.2);
+                p.drawCircle(0, 0, size);
+                p.endFill();
+                p.x = Math.random() * W;
+                p.y = Math.random() * H;
+                p.vx = (Math.random() - 0.5) * 0.5;
+                p.vy = (Math.random() - 0.5) * 0.5;
+                p.alpha = Math.random() * 0.5 + 0.2;
+                app.stage.addChild(p);
+                particles.push(p);
+            }
+
+            // ===== 中心发光圆环 =====
+            const ringOuter = new PIXI.Graphics();
+            ringOuter.beginFill(0x0f3460, 0.15);
+            ringOuter.drawCircle(0, 0, 180);
+            ringOuter.endFill();
+            ringOuter.x = centerX;
+            ringOuter.y = centerY;
+            app.stage.addChild(ringOuter);
+
+            const ring = new PIXI.Graphics();
+            ring.lineStyle(2, 0x53d8fb, 0.3);
+            ring.drawCircle(0, 0, 140);
+            ring.x = centerX;
+            ring.y = centerY;
+            app.stage.addChild(ring);
+
+            // ===== 浮动立方体（跟随鼠标） =====
+            const cubes = [];
+            const cubeColors = [0xe94560, 0x53d8fb, 0xf0c040, 0x7c5cfc, 0x2ecc71];
+            for (let i = 0; i < 5; i++) {
+                const c = new PIXI.Graphics();
+                const size = 20 + i * 6;
+                c.beginFill(cubeColors[i], 0.7);
+                c.drawRoundedRect(-size/2, -size/2, size, size, 4);
+                c.endFill();
+                c.lineStyle(1, cubeColors[i], 0.4);
+                c.drawRoundedRect(-size/2, -size/2, size, size, 4);
+                const angle = (i / 5) * Math.PI * 2;
+                c.baseAngle = angle;
+                c.orbitRadius = 100 + i * 30;
+                c.x = centerX + Math.cos(angle) * c.orbitRadius;
+                c.y = centerY + Math.sin(angle) * c.orbitRadius;
+                c.speed = 0.004 + i * 0.001;
+                app.stage.addChild(c);
+                cubes.push(c);
+            }
+
+            // ===== 姓名文字 =====
+            const nameText = new PIXI.Text({
+                text: '黄兴抗',
+                style: {
+                    fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+                    fontSize: 56,
+                    fill: '#ffffff',
+                    fontWeight: 700,
+                    letterSpacing: 8,
+                }
+            });
+            nameText.anchor.set(0.5);
+            nameText.x = centerX;
+            nameText.y = centerY - 10;
+            app.stage.addChild(nameText);
+
+            // ===== 副标题 =====
+            const subText = new PIXI.Text({
+                text: '电子信息工程 · 南昌师范学院',
+                style: {
+                    fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+                    fontSize: 16,
+                    fill: '#8899aa',
+                    letterSpacing: 4,
+                }
+            });
+            subText.anchor.set(0.5);
+            subText.x = centerX;
+            subText.y = centerY + 40;
+            app.stage.addChild(subText);
+
+            // ===== 技能标签（围绕圆环排列） =====
+            const skills = ['Java', 'Python', 'PixiJS', 'Spring Boot', 'MySQL', 'AI'];
+            const skillTexts = [];
+            skills.forEach((skill, i) => {
+                const angle = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+                const t = new PIXI.Text({
+                    text: skill,
+                    style: {
+                        fontFamily: '"PingFang SC", "Segoe UI", sans-serif',
+                        fontSize: 14,
+                        fill: '#aabbcc',
+                    }
+                });
+                t.anchor.set(0.5);
+                const radius = 220;
+                t.baseAngle = angle;
+                t.orbitRadius = radius;
+                t.x = centerX + Math.cos(angle) * radius;
+                t.y = centerY + Math.sin(angle) * radius;
+                app.stage.addChild(t);
+                skillTexts.push(t);
+            });
+
+            // ===== 连线粒子（鼠标交互） =====
+            const lines = new PIXI.Graphics();
+            app.stage.addChild(lines);
+
+            // ===== 点击波纹 =====
+            const ripples = [];
+
+            // ===== 动画循环 =====
+            let timeAcc = 0;
+            app.ticker.add(() => {
+                timeAcc += 0.008;
+
+                // 粒子缓慢漂移
+                particles.forEach((p) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0) p.x = W;
+                    if (p.x > W) p.x = 0;
+                    if (p.y < 0) p.y = H;
+                    if (p.y > H) p.y = 0;
+                });
+
+                // 立方体绕圈（受鼠标影响偏移）
+                cubes.forEach((c, i) => {
+                    const angle = c.baseAngle + timeAcc * c.speed * 100;
+                    const mx = (mouseX - centerX) * 0.15;
+                    const my = (mouseY - centerY) * 0.15;
+                    c.x = centerX + mx + Math.cos(angle) * (c.orbitRadius + mx * 0.3);
+                    c.y = centerY + my + Math.sin(angle) * (c.orbitRadius + my * 0.3);
+                    c.rotation += 0.01;
+                });
+
+                // 技能标签绕圈
+                skillTexts.forEach((t, i) => {
+                    const angle = t.baseAngle + timeAcc * 0.3;
+                    const mx = (mouseX - centerX) * 0.08;
+                    const my = (mouseY - centerY) * 0.08;
+                    t.x = centerX + mx + Math.cos(angle) * (t.orbitRadius + mx * 0.2);
+                    t.y = centerY + my + Math.sin(angle) * (t.orbitRadius + my * 0.2);
+                    t.alpha = 0.5 + 0.5 * Math.sin(timeAcc * 2 + i);
+                });
+
+                // 圆环呼吸 + 旋转
+                ring.rotation += 0.002;
+                const pulse = 1 + Math.sin(timeAcc * 2) * 0.02;
+                ring.scale.set(pulse);
+                ringOuter.scale.set(pulse);
+
+                // 文字呼吸
+                const breath = 1 + Math.sin(timeAcc * 1.5) * 0.015;
+                nameText.scale.set(breath);
+
+                // 点击波纹效果
+                if (mouseClicked) {
+                    const r = new PIXI.Graphics();
+                    r.beginFill(0x53d8fb, 0.3);
+                    r.drawCircle(0, 0, 5);
+                    r.endFill();
+                    r.x = mouseX;
+                    r.y = mouseY;
+                    r.life = 0;
+                    app.stage.addChild(r);
+                    ripples.push(r);
+                }
+
+                for (let i = ripples.length - 1; i >= 0; i--) {
+                    const r = ripples[i];
+                    r.life += 0.02;
+                    const scale = 1 + r.life * 8;
+                    r.scale.set(scale);
+                    r.alpha = Math.max(0, 0.3 - r.life * 0.015);
+                    if (r.life > 1.5 || r.alpha <= 0) {
+                        app.stage.removeChild(r);
+                        ripples.splice(i, 1);
+                    }
+                }
+
+                // 粒子连线（近距离粒子画线）
+                lines.clear();
+                lines.lineStyle(0.5, 0x53d8fb, 0.08);
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 100) {
+                            lines.moveTo(particles[i].x, particles[i].y);
+                            lines.lineTo(particles[j].x, particles[j].y);
+                        }
+                    }
+                }
+            });
+
+            // 辅助函数
+            function hslToHex(h, s, l) {
+                h /= 360;
+                s /= 100;
+                l /= 100;
+                let r, g, b;
+                if (s === 0) { r = g = b = l; }
+                else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                return (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+            }
+        })();
+    </script>
+</body>
+</html>

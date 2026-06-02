@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNC 学习助手</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS 变量 & 重置 ===== */
+:root {
+  --primary: #1a73e8;
+  --primary-light: #e8f0fe;
+  --primary-dark: #1557b0;
+  --success: #34a853;
+  --success-light: #e6f4ea;
+  --warning: #fbbc04;
+  --danger: #ea4335;
+  --danger-light: #fce8e6;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f4;
+  --gray-200: #e8eaed;
+  --gray-300: #dadce0;
+  --gray-500: #9aa0a6;
+  --gray-700: #5f6368;
+  --gray-900: #202124;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+  --transition: all .2s ease;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ===== 布局 ===== */
+.app-container { max-width: 1200px; margin: 0 auto; padding: 16px 20px 80px; }
+
+/* ===== 顶部导航 ===== */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; border-bottom: 1px solid var(--gray-200); margin-bottom: 24px;
+}
+.app-header h1 {
+  font-size: 22px; font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), #4a90d9);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.app-header .date-display { font-size: 14px; color: var(--gray-700); }
+
+/* ===== Tab 导航 ===== */
+.tab-nav {
+  display: flex; gap: 4px; background: var(--gray-100);
+  padding: 4px; border-radius: var(--radius); margin-bottom: 24px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.tab-btn {
+  flex: 1; padding: 10px 16px; border: none; background: transparent;
+  border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--gray-700);
+  transition: var(--transition); white-space: nowrap;
+}
+.tab-btn:hover { background: rgba(26,115,232,.08); color: var(--primary); }
+.tab-btn.active { background: #fff; color: var(--primary); box-shadow: var(--shadow); }
+.tab-btn .icon { margin-right: 6px; }
+
+/* ===== Tab 内容 ===== */
+.tab-content { display: none; animation: fadeIn .25s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== 卡片 ===== */
+.card {
+  background: #fff; border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px; font-weight: 600; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ===== 网格 ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+/* ===== 进度卡片 ===== */
+.progress-card {
+  background: #fff; border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow);
+  border-left: 4px solid var(--gray-300); transition: var(--transition);
+}
+.progress-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.progress-card.p0 { border-left-color: var(--danger); }
+.progress-card.p1 { border-left-color: var(--warning); }
+.progress-card.p2 { border-left-color: var(--success); }
+.progress-card.p3 { border-left-color: var(--primary); }
+.progress-card .priority-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 6px;
+}
+.progress-card.p0 .priority-badge { background: var(--danger-light); color: var(--danger); }
+.progress-card.p1 .priority-badge { background: #fef7e0; color: #e37400; }
+.progress-card.p2 .priority-badge { background: var(--success-light); color: var(--success); }
+.progress-card.p3 .priority-badge { background: var(--primary-light); color: var(--primary); }
+.progress-card .goal-text { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.progress-bar {
+  height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 3px; transition: width .6s ease;
+  background: linear-gradient(90deg, var(--primary), #4a90d9);
+}
+.progress-card.p0 .progress-bar-fill { background: linear-gradient(90deg, var(--danger), #ea7a6e); }
+.progress-card.p1 .progress-bar-fill { background: linear-gradient(90deg, #fbbc04, #fdd663); }
+.progress-card.p2 .progress-bar-fill { background: linear-gradient(90deg, var(--success), #5dc97a); }
+.progress-card.p3 .progress-bar-fill { background: linear-gradient(90deg, var(--primary), #4a90d9); }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-700); margin-top: 6px; }
+
+/* ===== 表单 ===== */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 500; color: var(--gray-700);
+  margin-bottom: 6px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+  transition: var(--transition); background: #fff;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.15);
+}
+.form-group textarea { min-height: 80px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ===== 按钮 ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: var(--transition); font-family: inherit;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-md); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #2d8f47; }
+.btn-ghost { background: transparent; color: var(--gray-700); border: 1px solid var(--gray-300); }
+.btn-ghost:hover { background: var(--gray-100); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-block { width: 100%; justify-content: center; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ===== 打卡日历 ===== */
+.calendar-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+.calendar-header {
+  text-align: center; font-size: 11px; color: var(--gray-500);
+  font-weight: 500; padding: 4px 0;
+}
+.calendar-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; border-radius: 6px; cursor: pointer;
+  background: var(--gray-100); transition: var(--transition);
+}
+.calendar-day:hover { transform: scale(1.1); }
+.calendar-day.today { border: 2px solid var(--primary); font-weight: 700; }
+.calendar-day.has-record {
+  background: var(--primary); color: #fff; position: relative;
+}
+.calendar-day.has-record.record-low { background: #d2e3fc; color: var(--gray-900); }
+.calendar-day.other-month { opacity: .3; }
+.calendar-day .badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--danger); color: #fff; font-size: 9px;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== 错误表格 ===== */
+.error-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.error-table th {
+  text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--gray-200);
+  font-weight: 600; color: var(--gray-700); font-size: 12px;
+}
+.error-table td { padding: 10px 8px; border-bottom: 1px solid var(--gray-100); }
+.error-table tr:hover td { background: var(--gray-50); }
+.error-type-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+}
+.error-type-对刀 { background: var(--danger-light); color: var(--danger); }
+.error-type-编程 { background: var(--primary-light); color: var(--primary); }
+.error-type-磨刀 { background: #fef7e0; color: #e37400; }
+.error-type-其他 { background: var(--gray-100); color: var(--gray-700); }
+
+/* ===== 周计划 ===== */
+.week-plan { margin-bottom: 20px; }
+.week-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--gray-200); margin-bottom: 10px;
+}
+.week-header h3 { font-size: 15px; font-weight: 600; }
+.week-progress { font-size: 12px; color: var(--gray-700); }
+.task-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item input[type="checkbox"] {
+  margin-top: 3px; width: 16px; height: 16px; cursor: pointer;
+  accent-color: var(--primary);
+}
+.task-item .task-text { flex: 1; }
+.task-item .task-text.done { text-decoration: line-through; color: var(--gray-500); }
+.task-item .task-date { font-size: 11px; color: var(--gray-500); white-space: nowrap; }
+
+/* ===== AI 聊天区 ===== */
+.ai-chat-area {
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+  height: 400px; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  background: var(--gray-50);
+}
+.ai-msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.7; }
+.ai-msg.user {
+  align-self: flex-end; background: var(--primary); color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ai-msg.assistant {
+  align-self: flex-start; background: #fff; color: var(--gray-900);
+  border: 1px solid var(--gray-200); border-bottom-left-radius: 4px;
+}
+.ai-msg.assistant h1, .ai-msg.assistant h2, .ai-msg.assistant h3 {
+  margin: 12px 0 6px; font-size: 15px;
+}
+.ai-msg.assistant p { margin: 6px 0; }
+.ai-msg.assistant ul, .ai-msg.assistant ol { margin: 6px 0; padding-left: 20px; }
+.ai-msg.assistant strong { font-weight: 600; }
+.ai-msg.assistant code {
+  background: var(--gray-100); padding: 1px 4px; border-radius: 3px; font-size: 13px;
+}
+.ai-input-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.ai-input-row input {
+  flex: 1; padding: 10px 14px; border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+}
+.ai-input-row input:focus { outline: none; border-color: var(--primary); }
+.typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
+.typing-indicator span {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--gray-500);
+  animation: typing 1.2s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: .2s; }
+.typing-indicator span:nth-child(3) { animation-delay: .4s; }
+@keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* ===== API 配置弹窗 ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff; border-radius: var(--radius); padding: 28px;
+  width: 90%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: fadeIn .2s ease;
+}
+.modal h2 { font-size: 18px; margin-bottom: 20px; }
+.modal .form-group { margin-bottom: 14px; }
+.modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ===== 每日统计今日摘要 ===== */
+.today-summary { text-align: center; padding: 24px; }
+.today-summary .date-big { font-size: 28px; font-weight: 700; color: var(--gray-900); }
+.today-summary .status-badge {
+  display: inline-block; margin-top: 8px; padding: 4px 16px;
+  border-radius: 20px; font-size: 13px; font-weight: 500;
+}
+.today-summary .status-badge.checked { background: var(--success-light); color: var(--success); }
+.today-summary .status-badge.pending { background: var(--gray-100); color: var(--gray-700); }
+
+/* ===== 空状态 ===== */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .app-container { padding: 12px 12px 80px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .tab-btn { font-size: 12px; padding: 8px 10px; }
+  .tab-btn .icon { margin-right: 3px; }
+  .ai-msg { max-width: 92%; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* ===== 工具类 ===== */
+.text-center { text-align: center; }
+.text-muted { color: var(--gray-500); font-size: 13px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* ===== 编辑模式 ===== */
+.edit-btn, .del-btn {
+  background: none; border: none; cursor: pointer; font-size: 14px;
+  padding: 2px 4px; border-radius: 4px; opacity: 0; transition: var(--transition);
+  line-height: 1;
+}
+.task-item:hover .edit-btn, .task-item:hover .del-btn,
+.goal-header:hover .edit-btn, .goal-header:hover .del-btn { opacity: .6; }
+.edit-btn:hover { opacity: 1 !important; background: var(--primary-light); }
+.del-btn:hover { opacity: 1 !important; background: var(--danger-light); }
+.inline-edit {
+  width: 100%; padding: 4px 8px; border: 1px solid var(--primary);
+  border-radius: 4px; font-size: 14px; font-family: inherit;
+  background: #fff; outline: none;
+}
+.add-task-row {
+  display: flex; gap: 6px; margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--gray-200);
+}
+.add-task-row input {
+  flex: 1; padding: 6px 10px; border: 1px dashed var(--gray-300);
+  border-radius: 6px; font-size: 13px; font-family: inherit;
+}
+.add-task-row input:focus { border-color: var(--primary); outline: none; }
+.add-task-row .btn { padding: 4px 12px; font-size: 12px; }
+.section-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.section-header .btn-sm { font-size: 11px; padding: 2px 8px; }
+
+/* ===== 图表容器 ===== */
+.chart-container { position: relative; height: 250px; width: 100%; }
+
+/* ===== API 连接状态 ===== */
+.api-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-500); }
+.api-status .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gray-500); transition: var(--transition);
+}
+.api-status .dot.connected { background: var(--success); }
+.api-status .dot.disconnected { background: var(--danger); }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ===== 顶部 ===== -->
+  <header class="app-header">
+    <h1>🔧 CNC 学习助手</h1>
+    <div class="date-display" id="headerDate"></div>
+  </header>
+
+  <!-- ===== Tab 导航 ===== -->
+  <nav class="tab-nav" id="tabNav">
+    <button class="tab-btn active" data-tab="dashboard"><span class="icon">📊</span>仪表盘</button>
+    <button class="tab-btn" data-tab="daily"><span class="icon">✅</span>每日打卡</button>
+    <button class="tab-btn" data-tab="goals"><span class="icon">🎯</span>目标管理</button>
+    <button class="tab-btn" data-tab="summary"><span class="icon">📈</span>数据汇总</button>
+    <button class="tab-btn" data-tab="ai"><span class="icon">🤖</span>AI建议</button>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- TAB 1: 仪表盘 -->
+  <!-- ============================================================ -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="grid-2">
+      <div class="card">
+        <div class="today-summary" id="todaySummary">
+          <div class="date-big" id="dashDate"></div>
+          <div class="status-badge pending" id="dashStatus">今日未打卡</div>
+          <p class="text-muted mt-8" id="dashFocus">今日重点：未设置</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 本周打卡</div>
+        <div id="weeklyCalendar" style="display:flex;gap:8px;justify-content:center;padding:8px 0;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 月度目标进度</div>
+      <div class="grid-4" id="goalCards"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">⚠️ 近期错误记录</div>
+        <div id="recentErrors"><div class="empty-state"><p>暂无错误记录</p></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💡 快捷操作</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-primary btn-block" onclick="switchTab('daily')">✏️ 去打卡</button>
+          <button class="btn btn-success btn-block" onclick="switchTab('ai'); getAISuggestion()">🤖 AI 获取本周学习建议</button>
+          <button class="btn btn-ghost btn-block" onclick="if(confirm('确定要清空所有数据吗？此操作不可恢复！')){clearAllData()}">🗑️ 清空测试数据</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 2: 每日打卡 -->
+  <!-- ============================================================ -->
+  <div class="tab-content" id="tab-daily">
+    <div class="card">
+      <div class="card-title">✅ 今日打卡 — <span id="dailyDate"></span></div>
+      <form id="dailyForm" onsubmit="return saveDailyRecord(event)">
+        <div class="form-group">
+          <label>今日重点</label>
+          <select name="focus">
+            <option value="螺纹切削">🔴 螺纹切削</option>
+            <option value="对刀练习">🟡 对刀练习</option>
+            <option value="磨刀练习">🟢 磨刀练习</option>
+            <option value="编程训练">🔵 编程训练</option>
+            <option value="理论学习">📖 理论学习</option>
+            <option value="综合实操">⚙️ 综合实操</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>磨刀练习（分钟）</label>
+            <input type="number" name="grinding" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>编程练习（分钟）</label>
+            <input type="number" name="programming" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>对刀操作（次数）</label>
+            <input type="number" name="toolSettingCount" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>对刀失误（次数）</label>
+            <input type="number" name="toolSettingErrors" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>理论学习（分钟）</label>
+          <input type="number" name="theory" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>📝 今日收获</label>
+          <textarea name="gains" placeholder="今天学到了什么？"></textarea>
+        </div>
+        <div class="form-group">
+          <label>⚠️ 今日问题 / 卡点</label>
+          <textarea name="problems" placeholder="遇到了什么困难？"></textarea>
+        </div>
+        <div class="form-group">
+          <label>📋 明天计划</label>
+          <textarea name="tomorrowPlan" placeholder="明天打算做什么？"></textarea>
+        </div>
+        <div class="flex-between">
+          <button type="submit" class="btn btn-primary">💾 保存打卡</button>
+          <span id="dailySaveHint" class="text-muted"></span>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ 快速记录错误</div>
+      <form id="errorForm" onsubmit="return saveError(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>错误类型</label>
+            <select name="errorType">
+              <option value="对刀">对刀失误</option>
+              <option value="编程">编程错误</option>
+              <option value="磨刀">磨刀问题</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>日期</label>
+            <input type="date" name="errorDate" id="errorDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>具体描述</label>
+          <input type="text" name="errorDesc" placeholder="发生了什么错误？" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>原因分析</label>
+            <input type="text" name="errorCause" placeholder="为什么出错？">
+          </div>
+          <div class="form-group">
+            <label>纠正措施</label>
+            <input type="text" name="errorSolution" placeholder="如何避免再犯？">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-danger btn-sm">➕ 记录错误</button>
+      </form>
+    </div>
+
+    <!-- 错误记录列表 -->
+    <div class="card" id="errorListCard">
+      <div class="card-title">📋 错误记录列表 <span class="text-muted" id="errorCount"></span></div>
+      <div id="errorTableContainer"><div class="empty-state"><p>还没有错误记录</p></div></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 3: 目标管理 -->
+  <!-- ============================================================ -->
+  <div class="tab-content" id="tab-goals">
+    <div class="card">
+      <div class="card-title">🎯 六月核心目标</div>
+      <div class="grid-2" id="monthlyGoals"></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <div class="card-title" style="margin:0;">📅 周计划</div>
+        <span id="overallWeekProgress" class="text-muted"></span>
+      </div>
+      <div id="weeklyPlans"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ 期末验收清单</div>
+      <div id="checklistContainer"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 4: 数据汇总 -->
+  <!-- ============================================================ -->
+  <div class="tab-content" id="tab-summary">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 打卡日历</div>
+        <div id="fullCalendar"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 本月统计概览</div>
+        <div id="monthStats"></div>
+        <div class="chart-container mt-16"><canvas id="weeklyTrendChart"></canvas></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">⏱️ 学习时间分布</div>
+        <div class="chart-container"><canvas id="timeDistChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚠️ 错误类型分布</div>
+        <div class="chart-container"><canvas id="errorPieChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 所有错误记录</div>
+      <div id="allErrorsTable"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 5: AI 建议 -->
+  <!-- ============================================================ -->
+  <div class="tab-content" id="tab-ai">
+    <div class="card">
+      <div class="flex-between">
+        <div class="card-title" style="margin:0;">🤖 AI 学习建议</div>
+        <div class="api-status" id="apiStatus">
+          <span class="dot disconnected" id="apiDot"></span>
+          <span id="apiStatusText">未配置</span>
+          <button class="btn btn-ghost btn-sm" onclick="showApiConfig()">设置</button>
+        </div>
+      </div>
+      <div class="ai-chat-area" id="aiChatArea">
+        <div class="ai-msg assistant">
+          <p>👋 你好！我是你的 CNC 学习助手。我可以：</p>
+          <ul>
+            <li>根据你的打卡数据生成学习建议</li>
+            <li>解答 CNC 编程和技术问题</li>
+            <li>帮你分析错误模式，提供改进方案</li>
+          </ul>
+          <p>点击下方「获取建议」或直接输入你的问题！</p>
+          <p class="text-muted mt-8">💡 使用前需先运行 <code>python server.py</code>，通过 <strong>http://localhost:5000</strong> 访问，然后点击右上角「设置」填入 API Key。</p>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input type="text" id="aiInput" placeholder="输入你的问题..."
+               onkeydown="if(event.key==='Enter')sendAIMessage()">
+        <button class="btn btn-primary" onclick="getAISuggestion()">📊 获取建议</button>
+        <button class="btn btn-success" onclick="sendAIMessage()">发送</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== API 配置弹窗 ===== -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h2>🔑 AI 接口配置</h2>
+    <div class="form-group">
+      <label>API 接口地址</label>
+      <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/chat/completions">
+    </div>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-...">
+    </div>
+    <div class="form-group">
+      <label>模型名称</label>
+      <select id="apiModel">
+        <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+        <option value="deepseek-chat">DeepSeek Chat</option>
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+        <option value="claude-opus-4-8">Claude Opus 4.8</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gpt-4o-mini">GPT-4o-mini</option>
+        <option value="custom">自定义</option>
+      </select>
+    </div>
+    <div class="form-group" id="customModelGroup" style="display:none;">
+      <label>自定义模型名</label>
+      <input type="text" id="customModel" placeholder="输入模型名称">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeApiConfig()">取消</button>
+      <button class="btn btn-primary" onclick="saveApiConfig()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   CNC 学习助手 — 完整 JavaScript
+   ================================================================ */
+
+// ===== 数据层 =====
+const DATA_KEY = 'cnc_learning_data';
+
+const defaultData = {
+  dailyRecords: {},
+  goals: {
+    monthly: [
+      { id: 'p0', priority: 'P0', text: '攻克螺纹切削', standard: '能独立编写螺纹加工程序并正确上机', completed: false },
+      { id: 'p1', priority: 'P1', text: '对刀零失误', standard: '连续一周对刀操作无坐标输入错误', completed: false },
+      { id: 'p2', priority: 'P2', text: '磨刀基本功达标', standard: '能独立磨出可用钻头/刀具', completed: false },
+      { id: 'p3', priority: 'P3', text: '脱离样本写程序', standard: '拿新图纸，不参考师傅样本，独立写出完整程序', completed: false }
+    ]
+  },
+  weeklyTasks: {
+    'w1': {
+      title: '第1周（6/1 - 6/7）：磨刀打基础 + 螺纹理论',
+      items: [
+        { id: 'w1_1', text: '了解磨刀角度原理（顶角、后角、横刃）', done: false },
+        { id: 'w1_2', text: '练习磨削姿势与手法稳定', done: false },
+        { id: 'w1_3', text: '尝试磨出对称刃口，检查是否跑偏', done: false },
+        { id: 'w1_4', text: '反复修正，目标刃口对称度达标', done: false },
+        { id: 'w1_5', text: '磨出可用的钻头，请师傅检验', done: false },
+        { id: 'w1_6', text: '回顾本周磨刀问题，整理笔记', done: false },
+        { id: 'w1_7', text: '搞清螺纹基本参数：螺距、牙深、螺纹高度计算', done: false },
+        { id: 'w1_8', text: '理解螺纹切削的进刀方式（直进法/斜进法）', done: false },
+        { id: 'w1_9', text: '找师傅现有的螺纹程序，逐行注释，理解每行代码的作用', done: false },
+        { id: 'w1_10', text: '在纸上手写一个完整的螺纹加工程序', done: false }
+      ]
+    },
+    'w2': {
+      title: '第2周（6/8 - 6/14）：螺纹实操 + 对刀强化',
+      items: [
+        { id: 'w2_1', text: '在模拟/空跑环境运行自己写的螺纹程序', done: false },
+        { id: 'w2_2', text: '找出模拟中的错误并修正', done: false },
+        { id: 'w2_3', text: '首次上机试切螺纹（师傅指导下）', done: false },
+        { id: 'w2_4', text: '测量螺纹参数，对比理论值，分析偏差原因', done: false },
+        { id: 'w2_5', text: '独立完成一次完整的螺纹加工作业', done: false },
+        { id: 'w2_6', text: '建立"输入前默念刀号"的肌肉记忆', done: false },
+        { id: 'w2_7', text: '每天对刀操作后自我检查一次', done: false },
+        { id: 'w2_8', text: '目标：连续5天对刀零失误', done: false }
+      ]
+    },
+    'w3': {
+      title: '第3周（6/15 - 6/21）：独立编程训练',
+      items: [
+        { id: 'w3_1', text: '拿到一张新图纸，先不看样本，自己尝试编程', done: false },
+        { id: 'w3_2', text: '写完后再对照师傅样本，标记差异点', done: false },
+        { id: 'w3_3', text: '每处差异问自己：为什么师傅这样写？我的写法有什么问题？', done: false },
+        { id: 'w3_4', text: '整理常见编程差异清单，形成自己的避坑指南', done: false },
+        { id: 'w3_5', text: '尝试编写含圆弧插补的程序', done: false }
+      ]
+    },
+    'w4': {
+      title: '第4周（6/22 - 6/30）：综合巩固 + 月度总结',
+      items: [
+        { id: 'w4_1', text: '独立完成至少3个不同零件的完整加工程序', done: false },
+        { id: 'w4_2', text: '螺纹切削精度达标（师傅确认）', done: false },
+        { id: 'w4_3', text: '磨刀技术达到可独立磨刀的水平', done: false },
+        { id: 'w4_4', text: '对刀操作连续零失误', done: false },
+        { id: 'w4_5', text: '撰写六月CNC学习总结', done: false }
+      ]
+    }
+  },
+  checklist: [
+    { id: 'cl_1', text: '能独立编写螺纹加工程序', done: false },
+    { id: 'cl_2', text: '能解释螺纹切削的工艺参数选择理由', done: false },
+    { id: 'cl_3', text: '对刀操作连续零失误 >= 5天', done: false },
+    { id: 'cl_4', text: '磨出的钻头经师傅确认可用', done: false },
+    { id: 'cl_5', text: '拿到新图纸能不依赖样本写出程序', done: false },
+    { id: 'cl_6', text: '积累了一份自己的编程避坑笔记', done: false },
+    { id: 'cl_7', text: '完成六月学习总结并记录在文件夹中', done: false }
+  ],
+  errors: [],
+  apiConfig: { endpoint: '', apiKey: '', model: 'claude-sonnet-4-6' }
+};
+
+let appData = {};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(DATA_KEY);
+    if (raw) {
+      appData = JSON.parse(raw);
+      // Merge with defaults for any missing keys
+      appData = deepMerge(structuredClone(defaultData), appData);
+      // 自动修正存储的错误 API 地址
+      if (appData.apiConfig && appData.apiConfig.endpoint) {
+        if (appData.apiConfig.endpoint.includes('/anthropic')) {
+          appData.apiConfig.endpoint = appData.apiConfig.endpoint.replace('/anthropic', '/chat/completions');
+          saveData();
+        }
+      }
+    } else {
+      appData = structuredClone(defaultData);
+    }
+  } catch (e) {
+    console.warn('数据加载失败，使用默认数据', e);
+    appData = structuredClone(defaultData);
+  }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(DATA_KEY, JSON.stringify(appData));
+  } catch (e) {
+    console.error('数据保存失败', e);
+    alert('数据保存失败，请检查浏览器存储空间');
+  }
+}
+
+function deepMerge(target, source) {
+  const result = structuredClone(target);
+  for (const key of Object.keys(source)) {
+    if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(result[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+function clearAllData() {
+  localStorage.removeItem(DATA_KEY);
+  loadData();
+  refreshAll();
+}
+
+// ===== 日期工具 =====
+function getToday() { return new Date().toISOString().slice(0, 10); }
+function getWeekNumber(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dayNum = (d.getDay() + 6) % 7; // Monday = 0
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - dayNum);
+  const month = monday.getMonth() + 1;
+  const date = monday.getDate();
+  return `w${Math.ceil(date / 7)}`;
+}
+function getWeekDay(dateStr) {
+  return (new Date(dateStr + 'T00:00:00').getDay() + 6) % 7; // Mon=0
+}
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
+function getWeekRange(weekId) {
+  const ranges = { w1: '6/1 - 6/7', w2: '6/8 - 6/14', w3: '6/15 - 6/21', w4: '6/22 - 6/30' };
+  return ranges[weekId] || weekId;
+}
+
+// ===== Tab 切换 =====
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${tabId}`).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+  if (tabId === 'summary') renderSummary();
+  if (tabId === 'ai') testApiConnection();
+}
+
+// ===== 打卡日历渲染（仪表盘小日历） =====
+function renderWeeklyCalendar() {
+  const container = document.getElementById('weeklyCalendar');
+  const today = getToday();
+  const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+  const todayD = new Date(today + 'T00:00:00');
+  const dayOfWeek = (todayD.getDay() + 6) % 7; // Mon=0
+  const monday = new Date(todayD);
+  monday.setDate(todayD.getDate() - dayOfWeek);
+
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const hasRecord = !!appData.dailyRecords[dateStr];
+    const isToday = dateStr === today;
+    html += `<div style="text-align:center;">
+      <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px;">${dayNames[i]}</div>
+      <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+        border-radius:50%;font-size:14px;font-weight:${isToday?'700':'400'};
+        background:${hasRecord?'var(--primary)':'var(--gray-100)'};
+        color:${hasRecord?'#fff':'var(--gray-900)'};
+        border:${isToday?'2px solid var(--primary)':'none'};
+        margin:0 auto;">${d.getDate()}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+// ===== 仪表盘渲染 =====
+function renderDashboard() {
+  const today = getToday();
+  document.getElementById('dashDate').textContent = formatDate(today);
+  const record = appData.dailyRecords[today];
+  const statusEl = document.getElementById('dashStatus');
+  const focusEl = document.getElementById('dashFocus');
+  if (record) {
+    statusEl.textContent = '✅ 今日已打卡';
+    statusEl.className = 'status-badge checked';
+    focusEl.textContent = `今日重点：${record.focus || '未设置'}`;
+  } else {
+    statusEl.textContent = '⏳ 今日未打卡';
+    statusEl.className = 'status-badge pending';
+    focusEl.textContent = '今日重点：未设置';
+  }
+
+  renderWeeklyCalendar();
+
+  // 目标卡片
+  const goalContainer = document.getElementById('goalCards');
+  goalContainer.innerHTML = appData.goals.monthly.map(g => {
+    const pct = computeGoalProgress(g.id);
+    return `<div class="progress-card ${g.id}">
+      <div class="priority-badge">${g.priority}</div>
+      <div class="goal-text">${g.text}</div>
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label"><span>${pct}%</span><span>${g.completed ? '✅ 已完成' : g.standard}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// 计算目标进度
+function computeGoalProgress(goalId) {
+  const g = appData.goals.monthly.find(x => x.id === goalId);
+  if (!g) return 0;
+  if (g.completed) return 100;
+  // 根据相关周任务和打卡数据估算
+  const records = Object.values(appData.dailyRecords);
+  if (goalId === 'p0') { // 螺纹切削 - 看是否有螺纹相关的学习记录 + w2任务完成度
+    const threadDays = records.filter(r => r.focus === '螺纹切削').length;
+    const w2Done = getWeekDoneRatio('w2');
+    return Math.min(100, Math.round((threadDays * 5 + w2Done * 30) / 35 * 100));
+  }
+  if (goalId === 'p1') { // 对刀零失误
+    const toolDays = records.filter(r => r.focus === '对刀练习').length;
+    const zeroErrorDays = records.filter(r => {
+      if (!r.toolSetting) return false;
+      return r.toolSetting.errors === 0 && r.toolSetting.count > 0;
+    }).length;
+    return Math.min(100, zeroErrorDays * 20);
+  }
+  if (goalId === 'p2') { // 磨刀
+    const grindDays = records.filter(r => (r.grinding || 0) > 0).length;
+    const w1Done = getWeekDoneRatio('w1');
+    return Math.min(100, Math.round((grindDays * 5 + w1Done * 20) / 25 * 100));
+  }
+  if (goalId === 'p3') { // 独立编程
+    const progDays = records.filter(r => r.focus === '编程训练').length;
+    const w3Done = getWeekDoneRatio('w3');
+    return Math.min(100, Math.round((progDays * 5 + w3Done * 30) / 35 * 100));
+  }
+  return 0;
+}
+
+function getWeekDoneRatio(weekId) {
+  const week = appData.weeklyTasks[weekId];
+  if (!week || !week.items.length) return 0;
+  return week.items.filter(i => i.done).length / week.items.length;
+}
+
+// ===== 每日打卡 =====
+function initDailyForm() {
+  document.getElementById('dailyDate').textContent = formatDate(getToday());
+  document.getElementById('errorDate').value = getToday();
+  // 加载已有数据
+  const record = appData.dailyRecords[getToday()];
+  if (record) {
+    const form = document.getElementById('dailyForm');
+    form.focus.value = record.focus || '理论学习';
+    form.grinding.value = record.grinding || 0;
+    form.programming.value = record.programming || 0;
+    form.toolSettingCount.value = record.toolSetting?.count || 0;
+    form.toolSettingErrors.value = record.toolSetting?.errors || 0;
+    form.theory.value = record.theory || 0;
+    form.gains.value = record.gains || '';
+    form.problems.value = record.problems || '';
+    form.tomorrowPlan.value = record.tomorrowPlan || '';
+    document.getElementById('dailySaveHint').textContent = '✅ 已有记录，可修改后重新保存';
+  } else {
+    document.getElementById('dailySaveHint').textContent = '';
+  }
+}
+
+function saveDailyRecord(event) {
+  event.preventDefault();
+  const form = document.getElementById('dailyForm');
+  const data = {
+    focus: form.focus.value,
+    grinding: parseInt(form.grinding.value) || 0,
+    programming: parseInt(form.programming.value) || 0,
+    toolSetting: {
+      count: parseInt(form.toolSettingCount.value) || 0,
+      errors: parseInt(form.toolSettingErrors.value) || 0
+    },
+    theory: parseInt(form.theory.value) || 0,
+    gains: form.gains.value.trim(),
+    problems: form.problems.value.trim(),
+    tomorrowPlan: form.tomorrowPlan.value.trim()
+  };
+  appData.dailyRecords[getToday()] = data;
+  saveData();
+  document.getElementById('dailySaveHint').textContent = '✅ 保存成功！';
+  refreshAll();
+  return false;
+}
+
+// ===== 错误记录 =====
+function saveError(event) {
+  event.preventDefault();
+  const form = document.getElementById('errorForm');
+  const err = {
+    date: form.errorDate.value || getToday(),
+    type: form.errorType.value,
+    description: form.errorDesc.value.trim(),
+    cause: form.errorCause.value.trim(),
+    solution: form.errorSolution.value.trim()
+  };
+  if (!err.description) { alert('请填写错误描述'); return false; }
+  appData.errors.push(err);
+  saveData();
+  form.errorDesc.value = '';
+  form.errorCause.value = '';
+  form.errorSolution.value = '';
+  renderErrors();
+  refreshAll();
+  return false;
+}
+
+function renderErrors() {
+  const container = document.getElementById('errorTableContainer');
+  document.getElementById('errorCount').textContent = `（共 ${appData.errors.length} 条）`;
+  if (!appData.errors.length) {
+    container.innerHTML = '<div class="empty-state"><p>还没有错误记录</p></div>';
+    return;
+  }
+  const recentErrors = [...appData.errors].reverse().slice(0, 10);
+  container.innerHTML = `<table class="error-table">
+    <thead><tr>
+      <th>日期</th><th>类型</th><th>描述</th><th>原因</th><th>措施</th>
+    </tr></thead><tbody>
+    ${recentErrors.map(e => `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td><span class="error-type-badge error-type-${e.type}">${e.type}</span></td>
+      <td>${escHtml(e.description)}</td>
+      <td>${escHtml(e.cause || '-')}</td>
+      <td>${escHtml(e.solution || '-')}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// 仪表盘里的近期错误
+function renderRecentErrors() {
+  const container = document.getElementById('recentErrors');
+  if (!appData.errors.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无错误记录</p></div>';
+    return;
+  }
+  const recent = [...appData.errors].reverse().slice(0, 5);
+  container.innerHTML = recent.map(e => `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:13px;">
+    <span class="error-type-badge error-type-${e.type}" style="flex-shrink:0;">${e.type}</span>
+    <span>${escHtml(e.description)}</span>
+    <span class="text-muted" style="flex-shrink:0;">${formatDate(e.date)}</span>
+  </div>`).join('');
+}
+
+// ===== 目标管理（可编辑版） =====
+let editingItem = null;  // 当前正在编辑的项 {type, id}
+
+function renderGoals() {
+  renderMonthlyGoals();
+  renderWeeklyPlans();
+  renderChecklist();
+}
+
+// ---------- 月度目标 ----------
+function renderMonthlyGoals() {
+  const container = document.getElementById('monthlyGoals');
+  container.innerHTML = appData.goals.monthly.map(g => {
+    const pct = computeGoalProgress(g.id);
+    const isEditing = editingItem?.type === 'goal' && editingItem?.id === g.id;
+    return `<div class="progress-card ${g.id}" style="position:relative;">
+      <div class="priority-badge">${g.priority}</div>
+      <div class="goal-header" style="display:flex;align-items:start;gap:4px;">
+        ${isEditing
+          ? `<input class="inline-edit" id="editGoalText_${g.id}" value="${escHtml(g.text)}" style="flex:1;">`
+          : `<div class="goal-text" style="flex:1;">${escHtml(g.text)}</div>`
+        }
+        <button class="edit-btn" onclick="editGoal('${g.id}')" title="编辑">✏️</button>
+        <button class="del-btn" onclick="deleteGoal('${g.id}')" title="删除">🗑️</button>
+      </div>
+      ${isEditing
+        ? `<div style="margin:6px 0;">
+            <label style="font-size:11px;color:var(--gray-500);">完成标准：</label>
+            <input class="inline-edit" id="editGoalStd_${g.id}" value="${escHtml(g.standard)}">
+           </div>
+           <button class="btn btn-primary btn-sm" onclick="saveGoalEdit('${g.id}')">保存</button>
+           <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">取消</button>`
+        : `<p class="text-muted" style="font-size:12px;margin:4px 0 8px;">${escHtml(g.standard)}</p>`
+      }
+      <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label"><span>${pct}%</span>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" ${g.completed?'checked':''} onchange="toggleGoal('${g.id}')">
+          标记完成
+        </label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editGoal(id) {
+  editingItem = { type: 'goal', id };
+  renderMonthlyGoals();
+}
+function saveGoalEdit(id) {
+  const g = appData.goals.monthly.find(x => x.id === id);
+  if (!g) return;
+  const textEl = document.getElementById(`editGoalText_${id}`);
+  const stdEl = document.getElementById(`editGoalStd_${id}`);
+  if (textEl) g.text = textEl.value.trim() || g.text;
+  if (stdEl) g.standard = stdEl.value.trim() || g.standard;
+  editingItem = null;
+  saveData(); renderGoals(); refreshAll();
+}
+function cancelEdit() {
+  editingItem = null;
+  renderGoals();
+}
+function deleteGoal(id) {
+  if (!confirm('确定删除这个目标吗？')) return;
+  appData.goals.monthly = appData.goals.monthly.filter(x => x.id !== id);
+  saveData(); renderGoals(); refreshAll();
+}
+
+// ---------- 周计划 ----------
+function renderWeeklyPlans() {
+  const container = document.getElementById('weeklyPlans');
+  const weekKeys = Object.keys(appData.weeklyTasks);
+  let totalDone = 0, totalItems = 0;
+  container.innerHTML = weekKeys.map(wk => {
+    const week = appData.weeklyTasks[wk];
+    const done = week.items.filter(i => i.done).length;
+    const total = week.items.length;
+    totalDone += done; totalItems += total;
+    const pct = total ? Math.round(done/total*100) : 0;
+    return `<div class="week-plan">
+      <div class="week-header">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;">
+          <h3>${escHtml(week.title)}</h3>
+          <button class="edit-btn" onclick="editWeekTitle('${wk}')" title="编辑标题">✏️</button>
+        </div>
+        <span class="week-progress">${done}/${total} (${pct}%)</span>
+      </div>
+      <div class="progress-bar" style="margin-bottom:10px;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <div id="weekItems_${wk}">
+        ${week.items.map(i => renderTaskItem(wk, i)).join('')}
+      </div>
+      <div class="add-task-row">
+        <input id="addInput_${wk}" placeholder="添加新任务..." onkeydown="if(event.key==='Enter')addTask('${wk}')">
+        <button class="btn btn-primary btn-sm" onclick="addTask('${wk}')">＋ 添加</button>
+      </div>
+    </div>`;
+  }).join('');
+  const overallPct = totalItems ? Math.round(totalDone/totalItems*100) : 0;
+  document.getElementById('overallWeekProgress').textContent = `总进度：${totalDone}/${totalItems} (${overallPct}%)`;
+}
+
+function renderTaskItem(wk, item) {
+  const isEditing = editingItem?.type === 'task' && editingItem?.id === item.id;
+  return `<div class="task-item">
+    <input type="checkbox" ${item.done?'checked':''} onchange="toggleTask('${wk}','${item.id}')"
+      style="margin-top:3px;">
+    ${isEditing
+      ? `<input class="inline-edit" id="editTask_${item.id}" value="${escHtml(item.text)}"
+           onkeydown="if(event.key==='Enter')saveTaskEdit('${wk}','${item.id}');if(event.key==='Escape')cancelEdit()"
+           autofocus>`
+      : `<span class="task-text ${item.done?'done':''}"
+           ondblclick="editTask('${wk}','${item.id}')"
+           style="flex:1;cursor:pointer;">${escHtml(item.text)}</span>`
+    }
+    <button class="edit-btn" onclick="editTask('${wk}','${item.id}')" title="编辑">✏️</button>
+    <button class="del-btn" onclick="deleteTask('${wk}','${item.id}')" title="删除">🗑️</button>
+  </div>`;
+}
+
+function editWeekTitle(wk) {
+  const newTitle = prompt('编辑周标题：', appData.weeklyTasks[wk]?.title || '');
+  if (newTitle && newTitle.trim()) {
+    appData.weeklyTasks[wk].title = newTitle.trim();
+    saveData(); renderGoals(); refreshAll();
+  }
+}
+function editTask(wk, taskId) {
+  editingItem = { type: 'task', id: taskId };
+  renderWeeklyPlans();
+  // 自动聚焦
+  setTimeout(() => document.getElementById(`editTask_${taskId}`)?.focus(), 50);
+}
+function saveTaskEdit(wk, taskId) {
+  const item = appData.weeklyTasks[wk]?.items.find(i => i.id === taskId);
+  if (!item) return;
+  const el = document.getElementById(`editTask_${taskId}`);
+  if (el) item.text = el.value.trim() || item.text;
+  editingItem = null;
+  saveData(); renderGoals(); refreshAll();
+}
+function deleteTask(wk, taskId) {
+  if (!confirm('确定删除这个任务吗？')) return;
+  appData.weeklyTasks[wk].items = appData.weeklyTasks[wk].items.filter(i => i.id !== taskId);
+  saveData(); renderGoals(); refreshAll();
+}
+function addTask(wk) {
+  const input = document.getElementById(`addInput_${wk}`);
+  const text = input.value.trim();
+  if (!text) return;
+  const week = appData.weeklyTasks[wk];
+  const maxId = week.items.reduce((m, i) => Math.max(m, parseInt(i.id.split('_')[1]||'0')), 0);
+  const newId = `${wk}_${maxId + 1}`;
+  week.items.push({ id: newId, text, done: false });
+  input.value = '';
+  saveData(); renderGoals(); refreshAll();
+}
+
+// ---------- 期末验收清单 ----------
+function renderChecklist() {
+  const container = document.getElementById('checklistContainer');
+  const clDone = appData.checklist.filter(i => i.done).length;
+  const clTotal = appData.checklist.length;
+  container.innerHTML = `<div class="progress-bar" style="margin-bottom:12px;">
+    <div class="progress-bar-fill" style="width:${clTotal?Math.round(clDone/clTotal*100):0}%"></div>
+  </div>
+  <div class="flex-between" style="margin-bottom:8px;">
+    <span class="text-muted">${clDone}/${clTotal} 已完成</span>
+    <button class="btn btn-ghost btn-sm" onclick="showAddChecklist()">＋ 添加</button>
+  </div>
+  ${appData.checklist.map(i => renderChecklistItem(i)).join('')}
+  <div id="addChecklistRow" style="display:none;" class="add-task-row">
+    <input id="addChecklistInput" placeholder="新验收项..." onkeydown="if(event.key==='Enter')addChecklist()">
+    <button class="btn btn-primary btn-sm" onclick="addChecklist()">确定</button>
+    <button class="btn btn-ghost btn-sm" onclick="hideAddChecklist()">取消</button>
+  </div>`;
+}
+
+function renderChecklistItem(item) {
+  const isEditing = editingItem?.type === 'checklist' && editingItem?.id === item.id;
+  return `<div class="task-item">
+    <input type="checkbox" ${item.done?'checked':''} onchange="toggleChecklist('${item.id}')"
+      style="margin-top:3px;">
+    ${isEditing
+      ? `<input class="inline-edit" id="editChecklist_${item.id}" value="${escHtml(item.text)}"
+           onkeydown="if(event.key==='Enter')saveChecklistEdit('${item.id}');if(event.key==='Escape')cancelEdit()">`
+      : `<span class="task-text ${item.done?'done':''}"
+           ondblclick="editChecklist('${item.id}')"
+           style="flex:1;cursor:pointer;">${escHtml(item.text)}</span>`
+    }
+    <button class="edit-btn" onclick="editChecklist('${item.id}')" title="编辑">✏️</button>
+    <button class="del-btn" onclick="deleteChecklist('${item.id}')" title="删除">🗑️</button>
+  </div>`;
+}
+
+function editChecklist(id) {
+  editingItem = { type: 'checklist', id };
+  renderChecklist();
+  setTimeout(() => document.getElementById(`editChecklist_${id}`)?.focus(), 50);
+}
+function saveChecklistEdit(id) {
+  const item = appData.checklist.find(i => i.id === id);
+  if (!item) return;
+  const el = document.getElementById(`editChecklist_${id}`);
+  if (el) item.text = el.value.trim() || item.text;
+  editingItem = null;
+  saveData(); renderGoals(); refreshAll();
+}
+function deleteChecklist(id) {
+  if (!confirm('确定删除这项吗？')) return;
+  appData.checklist = appData.checklist.filter(i => i.id !== id);
+  saveData(); renderGoals(); refreshAll();
+}
+function showAddChecklist() {
+  document.getElementById('addChecklistRow').style.display = 'flex';
+  document.getElementById('addChecklistInput').focus();
+}
+function hideAddChecklist() {
+  document.getElementById('addChecklistRow').style.display = 'none';
+}
+function addChecklist() {
+  const input = document.getElementById('addChecklistInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const maxId = appData.checklist.reduce((m, i) => Math.max(m, parseInt(i.id.split('_')[1]||'0')), 0);
+  appData.checklist.push({ id: `cl_${maxId + 1}`, text, done: false });
+  input.value = '';
+  hideAddChecklist();
+  saveData(); renderGoals(); refreshAll();
+}
+
+function toggleGoal(id) {
+  const g = appData.goals.monthly.find(x => x.id === id);
+  if (g) { g.completed = !g.completed; saveData(); renderGoals(); refreshAll(); }
+}
+function toggleTask(weekId, taskId) {
+  const week = appData.weeklyTasks[weekId];
+  if (!week) return;
+  const item = week.items.find(i => i.id === taskId);
+  if (item) { item.done = !item.done; saveData(); renderGoals(); refreshAll(); }
+}
+function toggleChecklist(id) {
+  const item = appData.checklist.find(i => i.id === id);
+  if (item) { item.done = !item.done; saveData(); renderGoals(); }
+}
+
+// ===== 数据汇总 =====
+let chartInstances = {};
+
+function renderSummary() {
+  // 日历
+  renderFullCalendar();
+  // 月统计
+  renderMonthStats();
+  // 图表
+  renderCharts();
+  // 所有错误
+  renderAllErrors();
+}
+
+function renderFullCalendar() {
+  const container = document.getElementById('fullCalendar');
+  const year = 2026, month = 5; // June
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startPad = (firstDay.getDay() + 6) % 7; // Mon=0
+  const totalDays = lastDay.getDate();
+  const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+  const today = getToday();
+
+  let html = `<div style="text-align:center;font-weight:600;margin-bottom:12px;">📅 2026年6月</div>
+  <div class="calendar-grid">`;
+  dayNames.forEach(d => { html += `<div class="calendar-header">${d}</div>`; });
+
+  for (let i = 0; i < startPad; i++) {
+    html += `<div></div>`;
+  }
+  for (let d = 1; d <= totalDays; d++) {
+    const dateStr = `2026-06-${String(d).padStart(2, '0')}`;
+    const record = appData.dailyRecords[dateStr];
+    const isToday = dateStr === today;
+    let cls = 'calendar-day';
+    if (isToday) cls += ' today';
+    if (record) {
+      const totalMin = (record.grinding||0) + (record.programming||0) + (record.theory||0);
+      cls += totalMin >= 90 ? ' has-record' : ' has-record record-low';
+    }
+    if (dateStr < '2026-06-01' || dateStr > '2026-06-30') cls += ' other-month';
+    const errorCount = appData.errors.filter(e => e.date === dateStr).length;
+    html += `<div class="${cls}" title="${formatDate(dateStr)}${record?' ✅':' ❌'}">
+      ${d}${errorCount > 0 ? `<span class="badge">${errorCount}</span>` : ''}
+    </div>`;
+  }
+  html += '</div>';
+  // 图例
+  html += `<div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--gray-700);">
+    <span>🟦 已打卡</span><span>⬜ 未打卡</span><span style="color:var(--danger);">🔴 有错误记录</span>
+  </div>`;
+  container.innerHTML = html;
+}
+
+function renderMonthStats() {
+  const container = document.getElementById('monthStats');
+  const records = Object.entries(appData.dailyRecords);
+  const totalDays = records.length;
+  const totalGrinding = records.reduce((s, [,r]) => s + (r.grinding||0), 0);
+  const totalProg = records.reduce((s, [,r]) => s + (r.programming||0), 0);
+  const totalTheory = records.reduce((s, [,r]) => s + (r.theory||0), 0);
+  const totalToolOps = records.reduce((s, [,r]) => s + (r.toolSetting?.count||0), 0);
+  const totalToolErrs = records.reduce((s, [,r]) => s + (r.toolSetting?.errors||0), 0);
+  const totalMins = totalGrinding + totalProg + totalTheory;
+  const streak = calcStreak();
+
+  container.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+    <div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--primary);">${totalDays}</div>
+      <div class="text-muted">打卡天数</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--success);">${streak}</div>
+      <div class="text-muted">连续打卡天数</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--warning);">${totalMins}</div>
+      <div class="text-muted">总学习时长（分钟）</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+    <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
+      <div style="font-size:20px;font-weight:600;">${totalProg}</div>
+      <div class="text-muted">编程练习（分钟）</div>
+    </div>
+    <div style="text-align:center;padding:10px;background:var(--gray-50);border-radius:8px;">
+      <div style="font-size:20px;font-weight:600;">${totalToolOps}次 / ${totalToolErrs}次失误</div>
+      <div class="text-muted">对刀操作 / 失误</div>
+    </div>
+  </div>`;
+}
+
+function calcStreak() {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 31; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    if (appData.dailyRecords[dateStr]) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function renderCharts() {
+  // 周趋势图
+  const weekCtx = document.getElementById('weeklyTrendChart').getContext('2d');
+  if (chartInstances.weeklyTrend) chartInstances.weeklyTrend.destroy();
+  const records = Object.entries(appData.dailyRecords).sort(([a],[b]) => a.localeCompare(b));
+  const labels = records.map(([d]) => formatDate(d));
+  const grindingData = records.map(([,r]) => r.grinding||0);
+  const progData = records.map(([,r]) => r.programming||0);
+  const theoryData = records.map(([,r]) => r.theory||0);
+
+  chartInstances.weeklyTrend = new Chart(weekCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '磨刀', data: grindingData, backgroundColor: '#34a853', borderRadius: 4 },
+        { label: '编程', data: progData, backgroundColor: '#1a73e8', borderRadius: 4 },
+        { label: '理论', data: theoryData, backgroundColor: '#fbbc04', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { beginAtZero: true, title: { display: true, text: '分钟' } }
+      }
+    }
+  });
+
+  // 学习时间分布 - 饼图
+  const distCtx = document.getElementById('timeDistChart').getContext('2d');
+  if (chartInstances.timeDist) chartInstances.timeDist.destroy();
+  const totalG = records.reduce((s, [,r]) => s + (r.grinding||0), 0);
+  const totalP = records.reduce((s, [,r]) => s + (r.programming||0), 0);
+  const totalT = records.reduce((s, [,r]) => s + (r.theory||0), 0);
+  chartInstances.timeDist = new Chart(distCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['磨刀', '编程', '理论学习'],
+      datasets: [{
+        data: [totalG, totalP, totalT],
+        backgroundColor: ['#34a853', '#1a73e8', '#fbbc04'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } }
+      }
+    }
+  });
+
+  // 错误类型分布 - 饼图
+  const errCtx = document.getElementById('errorPieChart').getContext('2d');
+  if (chartInstances.errorPie) chartInstances.errorPie.destroy();
+  const errTypes = {};
+  appData.errors.forEach(e => { errTypes[e.type] = (errTypes[e.type] || 0) + 1; });
+  const errLabels = Object.keys(errTypes);
+  const errData = Object.values(errTypes);
+  const errColors = { '对刀': '#ea4335', '编程': '#1a73e8', '磨刀': '#fbbc04', '其他': '#9aa0a6' };
+  chartInstances.errorPie = new Chart(errCtx, {
+    type: 'doughnut',
+    data: {
+      labels: errLabels,
+      datasets: [{ data: errData, backgroundColor: errLabels.map(l => errColors[l] || '#9aa0a6'), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } } }
+    }
+  });
+}
+
+function renderAllErrors() {
+  const container = document.getElementById('allErrorsTable');
+  if (!appData.errors.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无错误记录</p></div>';
+    return;
+  }
+  container.innerHTML = `<table class="error-table">
+    <thead><tr><th>日期</th><th>类型</th><th>描述</th><th>原因</th><th>措施</th></tr></thead><tbody>
+    ${[...appData.errors].reverse().map(e => `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td><span class="error-type-badge error-type-${e.type}">${e.type}</span></td>
+      <td>${escHtml(e.description)}</td>
+      <td>${escHtml(e.cause || '-')}</td>
+      <td>${escHtml(e.solution || '-')}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ===== AI 建议（修复版：通过本地代理解决 CORS） =====
+const PROXY_URL = '/api/chat';  // 本地代理地址
+
+// 检测是否通过服务器访问
+function isRunningOnServer() {
+  return window.location.protocol === 'http:' || window.location.protocol === 'https:';
+}
+
+function showApiConfig() {
+  const cfg = appData.apiConfig || {};
+  // 自动修正已知的错误地址
+  let endpoint = cfg.endpoint || '';
+  if (endpoint.includes('/anthropic')) {
+    endpoint = endpoint.replace('/anthropic', '/chat/completions');
+  }
+  document.getElementById('apiEndpoint').value = endpoint;
+  document.getElementById('apiKey').value = cfg.apiKey || '';
+  document.getElementById('apiModel').value = cfg.model || 'claude-sonnet-4-6';
+  if (cfg.model && !['deepseek-v4-flash','deepseek-chat','claude-sonnet-4-6','claude-opus-4-8','gpt-4o','gpt-4o-mini'].includes(cfg.model)) {
+    document.getElementById('apiModel').value = 'custom';
+    document.getElementById('customModel').value = cfg.model;
+    document.getElementById('customModelGroup').style.display = 'block';
+  } else {
+    document.getElementById('customModelGroup').style.display = 'none';
+  }
+  document.getElementById('apiModal').classList.add('show');
+}
+function closeApiConfig() {
+  document.getElementById('apiModal').classList.remove('show');
+}
+function saveApiConfig() {
+  const modelSelect = document.getElementById('apiModel').value;
+  const model = modelSelect === 'custom' ? document.getElementById('customModel').value.trim() : modelSelect;
+  let endpoint = document.getElementById('apiEndpoint').value.trim();
+  // 自动修正错误地址
+  if (endpoint.includes('/anthropic')) {
+    endpoint = endpoint.replace('/anthropic', '/chat/completions');
+  }
+  appData.apiConfig = {
+    endpoint: endpoint,
+    apiKey: document.getElementById('apiKey').value.trim(),
+    model: model
+  };
+  saveData();
+  closeApiConfig();
+  testApiConnection();
+}
+document.getElementById('apiModel').addEventListener('change', function() {
+  document.getElementById('customModelGroup').style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+/** 检测 API 连接状态（通过本地代理） */
+async function testApiConnection() {
+  const cfg = appData.apiConfig;
+  const dot = document.getElementById('apiDot');
+  const text = document.getElementById('apiStatusText');
+
+  // 检测是否通过服务器访问
+  if (!isRunningOnServer()) {
+    dot.className = 'dot disconnected';
+    text.textContent = '请通过 http://localhost:5000 访问';
+    return;
+  }
+
+  if (!cfg.endpoint || !cfg.apiKey) {
+    dot.className = 'dot disconnected';
+    text.textContent = '未配置';
+    return;
+  }
+  dot.className = 'dot';
+  text.textContent = '检测中...';
+  try {
+    const resp = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: cfg.endpoint,
+        apiKey: cfg.apiKey,
+        model: cfg.model,
+        messages: [{ role: 'user', content: '回复"连接成功"四个字' }],
+        max_tokens: 20
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok && data.reply) {
+      dot.className = 'dot connected';
+      text.textContent = '已连接';
+    } else {
+      dot.className = 'dot disconnected';
+      text.textContent = data.error ? `错误` : '连接失败';
+      if (data.error) console.error('API 连接测试失败:', data.error);
+    }
+  } catch (e) {
+    dot.className = 'dot disconnected';
+    text.textContent = '无法连接代理';
+  }
+}
+
+/** 一键获取学习建议 */
+async function getAISuggestion() {
+  const cfg = appData.apiConfig;
+  if (!isRunningOnServer()) {
+    addChatMessage('assistant', '⚠️ 请先运行 `python server.py`，然后通过 **http://localhost:5000** 访问本页面才能使用 AI 功能。');
+    return;
+  }
+  if (!cfg.endpoint || !cfg.apiKey) {
+    showApiConfig();
+    return;
+  }
+  const context = buildAIContext();
+  // 去掉 system message（让代理根据 API 类型自动处理）
+  const prompt = `你是一个CNC数控机床加工的学习教练。以下是我的学习数据：
+
+${context}
+
+请基于这些数据给我具体的本周学习建议，要求：
+1. 分析我当前的学习状态和进度
+2. 指出我需要注意的问题
+3. 给出接下来2-3天的具体学习建议
+
+回复要具体、实用，用中文。`;
+  const msgs = [
+    { role: 'system', content: '你是一个专业的CNC数控机床学习教练。你的风格：专业、具体、鼓励但实事求是。回答用中文，使用markdown格式。' },
+    { role: 'user', content: prompt }
+  ];
+  await sendToAI(msgs, '📊 请根据我的学习数据给出建议');
+}
+
+/** 发送用户输入的消息 */
+async function sendAIMessage() {
+  const input = document.getElementById('aiInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const cfg = appData.apiConfig;
+  if (!isRunningOnServer()) {
+    addChatMessage('user', msg);
+    addChatMessage('assistant', '⚠️ 请先运行 `python server.py`，然后通过 **http://localhost:5000** 访问本页面才能使用 AI 功能。');
+    return;
+  }
+  if (!cfg.endpoint || !cfg.apiKey) {
+    showApiConfig();
+    return;
+  }
+  const context = buildAIContext();
+  const msgs = [
+    { role: 'system', content: '你是一个专业的CNC数控机床学习教练。你帮助学生：分析学习数据，解答CNC编程/对刀/磨刀/螺纹切削等技术问题。风格专业、具体。回答用中文，使用markdown格式。' },
+    { role: 'user', content: `以下是我的学习数据供参考：\n${context}\n\n我的问题是：${msg}` }
+  ];
+  await sendToAI(msgs, msg);
+}
+
+/** 构建学习上下文 */
+function buildAIContext() {
+  const records = Object.entries(appData.dailyRecords).sort(([a],[b]) => b.localeCompare(a)).slice(0, 7);
+  const recStr = records.length ? records.map(([d, r]) =>
+    `- ${formatDate(d)}：重点=${r.focus||'未设置'}，磨刀${r.grinding||0}min，编程${r.programming||0}min，对刀${r.toolSetting?.count||0}次(失误${r.toolSetting?.errors||0}次)，理论${r.theory||0}min`
+  ).join('\n') : '暂无打卡记录';
+
+  const errors = appData.errors.slice(-5).reverse();
+  const errStr = errors.length ? errors.map(e =>
+    `- ${formatDate(e.date)} [${e.type}] ${e.description}（原因：${e.cause||'未知'}，措施：${e.solution||'无'}）`
+  ).join('\n') : '暂无错误记录';
+
+  const goals = appData.goals.monthly.map(g =>
+    `${g.priority} - ${g.text}（完成标准：${g.standard}，状态：${g.completed?'✅已完成':'进行中'}）`
+  ).join('\n');
+
+  return `【最近7天打卡】
+${recStr}
+
+【错误记录】
+${errStr}
+
+【月度目标】
+${goals}`;
+}
+
+/** 添加聊天消息气泡 */
+function addChatMessage(role, content) {
+  const area = document.getElementById('aiChatArea');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  if (role === 'assistant') {
+    div.innerHTML = marked(content);
+  } else {
+    div.textContent = content;
+  }
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+/** 显示打字中指示器 */
+function showTyping() {
+  const area = document.getElementById('aiChatArea');
+  if (document.getElementById('typingIndicator')) return;  // 避免重复
+  const div = document.createElement('div');
+  div.className = 'ai-msg assistant';
+  div.id = 'typingIndicator';
+  div.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+/** 核心：通过本地代理发送 AI 请求 */
+async function sendToAI(messages, userLabel) {
+  const cfg = appData.apiConfig;
+  addChatMessage('user', userLabel);
+  showTyping();
+
+  try {
+    const resp = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: cfg.endpoint,
+        apiKey: cfg.apiKey,
+        model: cfg.model,
+        messages: messages,
+        max_tokens: 2000,
+        temperature: 0.7
+      })
+    });
+    hideTyping();
+
+    const data = await resp.json();
+    if (resp.ok && data.reply) {
+      addChatMessage('assistant', data.reply);
+    } else {
+      addChatMessage('assistant', `❌ ${data.error || '请求失败，请检查 API 配置'}`);
+    }
+  } catch (e) {
+    hideTyping();
+    addChatMessage('assistant', `❌ 网络错误：${e.message}。请确认已运行 \`python server.py\``);
+  }
+}
+
+// 简单的 Markdown 渲染（只支持基本语法）
+function marked(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h2>$1</h2>')
+    .replace(/# (.+)/g, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/\n/g, '<br>')
+    .replace(/(<br>)+<\/ul>/g, '</ul>')
+    .replace(/<\/ul><br>/g, '</ul>')
+    .replace(/<br><li>/g, '<li>')
+    .replace(/<br><\/li>/g, '</li>');
+}
+
+function escHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ===== 全页刷新 =====
+function refreshAll() {
+  renderDashboard();
+  initDailyForm();
+  renderErrors();
+  renderRecentErrors();
+  renderGoals();
+  if (document.getElementById('tab-summary').classList.contains('active')) renderSummary();
+}
+
+// ===== Tab 事件绑定 =====
+document.getElementById('tabNav').addEventListener('click', function(e) {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  switchTab(btn.dataset.tab);
+});
+
+// ===== 加载完成后的入口 =====
+function init() {
+  loadData();
+  document.getElementById('headerDate').textContent = `📅 ${formatDate(getToday())}`;
+  refreshAll();
+}
+
+init();
+</script>
+</body>
+</html>

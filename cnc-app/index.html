@@ -412,8 +412,11 @@ body {
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button class="btn btn-primary btn-block" onclick="switchTab('daily')">✏️ 去打卡</button>
           <button class="btn btn-success btn-block" onclick="switchTab('ai'); getAISuggestion()">🤖 AI 获取本周学习建议</button>
+          <button class="btn btn-ghost btn-block" onclick="exportData()">📤 导出数据</button>
+          <button class="btn btn-ghost btn-block" onclick="document.getElementById('importFileInput').click()">📥 导入数据</button>
           <button class="btn btn-ghost btn-block" onclick="if(confirm('确定要清空所有数据吗？此操作不可恢复！')){clearAllData()}">🗑️ 清空测试数据</button>
         </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
       </div>
     </div>
   </div>
@@ -778,6 +781,51 @@ function clearAllData() {
   localStorage.removeItem(DATA_KEY);
   loadData();
   refreshAll();
+}
+
+// ===== 数据导入/导出 =====
+function exportData() {
+  const raw = localStorage.getItem(DATA_KEY);
+  if (!raw || raw === '{}') {
+    alert('暂无数据可导出');
+    return;
+  }
+  const blob = new Blob([raw], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = getToday();
+  a.download = `CNC学习数据_${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      // 简单校验是不是合法的数据格式
+      if (!data.dailyRecords && !data.goals && !data.errors) {
+        alert('文件格式不正确，请选择正确的备份文件');
+        return;
+      }
+      if (!confirm('导入将覆盖当前所有数据，确定继续吗？')) return;
+      localStorage.setItem(DATA_KEY, JSON.stringify(data));
+      loadData();
+      refreshAll();
+      alert('✅ 数据导入成功！');
+    } catch (err) {
+      alert('文件解析失败，请确认是有效的JSON文件');
+    }
+  };
+  reader.readAsText(file);
+  // 重置 input 以便重复选择同一文件
+  event.target.value = '';
 }
 
 // ===== 日期工具 =====

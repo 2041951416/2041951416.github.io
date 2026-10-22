@@ -10,6 +10,9 @@
     pat: "blog.pat",
     gistId: "blog.gistId",
     state: "blog.state",
+    // 编辑凭证独立存放：blog.pat 是 classic + gist scope，只用于进度同步。
+    // 混用会让编辑器静默失败，也会扩大 gist token 的权限。
+    editPat: "blog.editPat",
   };
   var STATE_FILE = "blog-plan-state.json";
   var SCHEMA = 1;
@@ -377,6 +380,21 @@
     try {
       if (v) localStorage.setItem(LS.gistId, v);
       else localStorage.removeItem(LS.gistId);
+    } catch (e) {}
+  }
+
+  /* 编辑器凭证：与 gist token 分开存 */
+  function getEditPat() {
+    try {
+      return localStorage.getItem(LS.editPat) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function setEditPat(v) {
+    try {
+      if (v) localStorage.setItem(LS.editPat, v);
+      else localStorage.removeItem(LS.editPat);
     } catch (e) {}
   }
 
@@ -772,6 +790,10 @@
     setPat: setPat,
     getGistId: getGistId,
     setGistId: setGistId,
+    getEditPat: getEditPat,
+    setEditPat: setEditPat,
+    GH: GH,
+    ghError: ghError,
     // 主题
     applyTheme: applyTheme,
     toggleTheme: toggleTheme,

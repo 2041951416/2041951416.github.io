@@ -40,6 +40,12 @@
   box-sizing: border-box;
 }
 
+/* 全局 hidden：.empty[hidden] 等元素在 JS 接管前也会保持隐藏，
+   否则首屏会闪一下空状态文案。 */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -513,10 +519,6 @@ mark {
 .phase-body {
   padding-block: 2px 20px;
   padding-inline-start: 2.4em;
-}
-
-.phase-body[hidden] {
-  display: none;
 }
 
 .chev {
@@ -1174,4 +1176,255 @@ mark {
     background: #fff;
     color: #000;
   }
+}
+
+/* ============================================================
+   编辑器
+   ============================================================ */
+
+.editor {
+  max-width: 1180px;
+}
+
+.editor .field {
+  margin-block: 16px;
+}
+
+.editor .field label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  margin-block-end: 5px;
+  letter-spacing: 0.02em;
+}
+
+.editor input[type="text"],
+.editor input[type="date"],
+.editor textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-block-end: 1px solid var(--hairline);
+  border-radius: 0;
+  padding: 8px 0;
+  outline: none;
+}
+
+.editor input:focus,
+.editor textarea:focus {
+  border-block-end-color: var(--accent);
+}
+
+.editor input[readonly] {
+  color: var(--ink-3);
+  border-block-end-style: dashed;
+  cursor: not-allowed;
+}
+
+.editor textarea {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  line-height: 1.75;
+  min-height: 420px;
+  resize: vertical;
+  padding-block-start: 12px;
+  border: 1px solid var(--hairline);
+  padding-inline: 12px;
+  tab-size: 2;
+}
+
+.editor textarea:focus {
+  border-color: var(--accent);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .editor-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .editor textarea {
+    min-height: 260px;
+  }
+}
+
+.preview-pane {
+  border-inline-start: 1px solid var(--hairline);
+  padding-inline-start: 28px;
+  min-height: 200px;
+}
+
+@media (max-width: 900px) {
+  .preview-pane {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--hairline);
+    padding-inline-start: 0;
+    padding-block-start: 20px;
+  }
+}
+
+.preview-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-block-end: 14px;
+}
+
+.field-error {
+  color: #c9553d;
+  font-size: 0.78rem;
+  margin-block-start: 5px;
+  min-height: 1.2em;
+  line-height: 1.5;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-block: 26px 10px;
+  padding-block-start: 20px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.editor-actions .spacer {
+  flex: 1;
+}
+
+/* 文章页的编辑条 */
+
+#edit-bar {
+  margin-block: 0 26px;
+}
+
+#edit-bar .actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 列表页里的小编辑链接 */
+
+.entry-edit {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  border: 1px solid var(--hairline);
+  padding: 1px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+  margin-inline-start: 10px;
+  vertical-align: 1px;
+}
+
+.entry-edit:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.card-edit-row {
+  margin-block-start: 8px;
+}
+
+/* 计划编辑器 */
+
+.plan-editor .phase-block {
+  border: 1px solid var(--hairline);
+  padding: 18px 20px;
+  margin-block-end: 16px;
+}
+
+.plan-editor .phase-head-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-block-end: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-editor .phase-head-row input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.plan-id {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  background: var(--surface);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.plan-task-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-block: 7px;
+  border-block-end: 1px solid var(--hairline);
+  flex-wrap: wrap;
+}
+
+.plan-task-row:last-child {
+  border-block-end: 0;
+}
+
+.plan-task-row input.task-title {
+  flex: 1;
+  min-width: 180px;
+  font-size: 0.88rem;
+}
+
+.plan-task-row input.task-id {
+  width: 110px;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+}
+
+.plan-warn {
+  font-size: 0.74rem;
+  color: #c9553d;
+  white-space: nowrap;
+}
+
+.plan-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid var(--hairline);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.74rem;
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-btn.danger:hover {
+  border-color: #c9553d;
+  color: #c9553d;
+}
+
+.add-row {
+  margin-block-start: 12px;
 }

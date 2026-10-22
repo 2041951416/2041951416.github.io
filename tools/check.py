@@ -160,6 +160,41 @@ def check_plan():
     print(f"  阶段 {len(phases)} 个，任务 {total} 项")
 
 
+def check_site():
+    """site.json 是可选的；存在就校验结构与必备字段。"""
+    path = os.path.join(CONTENT, "site.json")
+    if not os.path.isfile(path):
+        warnings.append("content/site.json 不存在，页面会使用 HTML 内置的静态文案")
+        return
+    try:
+        site = json.loads(read_text(path))
+    except json.JSONDecodeError as e:
+        errors.append(f"content/site.json 不是合法 JSON：{e}")
+        return
+
+    if not isinstance(site, dict):
+        errors.append("content/site.json 顶层必须是对象")
+        return
+
+    if not str(site.get("brand", "")).strip():
+        errors.append("content/site.json 的 brand 不能为空")
+
+    about = site.get("about")
+    if about is not None and not isinstance(about, list):
+        errors.append("content/site.json 的 about 必须是数组（每个元素一段）")
+
+    hero = site.get("hero")
+    if hero is not None and not isinstance(hero, dict):
+        errors.append("content/site.json 的 hero 必须是对象")
+
+    ledes = site.get("ledes")
+    if ledes is not None and not isinstance(ledes, dict):
+        errors.append("content/site.json 的 ledes 必须是对象")
+
+    print("检查站点文案…")
+    print(f"  站名「{site.get('brand')}」，关于段落 {len(about or [])} 段")
+
+
 def main():
     idx_path = os.path.join(CONTENT, "index.json")
     if not os.path.isfile(idx_path):
@@ -182,6 +217,8 @@ def main():
 
     print("检查学习路线…")
     check_plan()
+
+    check_site()
 
     print()
     if warnings:

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>阅读 · 黄兴抗</title>
+<title>阅读 · Seek answer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js"></script>
@@ -12,7 +12,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
     <nav class="nav">
       <a href="index.html" data-page="index">概览</a>
       <a href="plan.html" data-page="plan">学习计划</a>
@@ -42,13 +42,14 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>© <span id="year">2026</span> Seek answer</span>
     <span><a href="notes.html">知识点</a> · <a href="posts.html">随笔</a></span>
   </div>
 </footer>
 
 <script src="https://fastly.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
 <script>
 (function () {
   var B = window.Blog;
@@ -137,6 +138,60 @@
     });
   }
 
+  /**
+   * 编辑条只对已登录的人渲染 —— 未登录时 DOM 里连元素都不存在，
+   * 也就不可能误触。这里只判断 localStorage 里有没有凭证，不发请求。
+   */
+  function mountEditBar(kind, slug, title, backHref) {
+    var E = window.BlogEditor;
+    if (!E || !E.isLoggedIn()) return;
+
+    var head = document.getElementById("head");
+    var bar = document.createElement("div");
+    bar.className = "sync-bar";
+    bar.id = "edit-bar";
+    bar.innerHTML =
+      "<span>以编辑身份浏览</span>" +
+      '<span class="actions">' +
+      '<a class="btn" href="edit.html?p=' + encodeURIComponent(slug) + '">编辑</a>' +
+      '<button type="button" class="btn" id="btn-delete">删除</button>' +
+      "</span>";
+    head.parentNode.insertBefore(bar, head.nextSibling);
+
+    document.getElementById("btn-delete").addEventListener("click", function () {
+      if (!confirm("确定删除《" + title + "》？\n\n这会从站点上移除这篇文章，并从列表里去掉。")) return;
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = "删除中…";
+
+      var dir = kind === "note" ? "content/notes/" : "content/posts/";
+      var mdPath = dir + slug + ".md";
+
+      E.commit(
+        {
+          build: function (ctx) {
+            return ctx.getFile("content/index.json").then(function (cur) {
+              var idx = JSON.parse(cur.text);
+              var next = E.applyManifest(idx, kind, slug, null, slug);
+              var put = {};
+              put["content/index.json"] = JSON.stringify(next, null, 2) + "\n";
+              return { put: put, del: [mdPath] };
+            });
+          },
+        },
+        "删除" + (kind === "note" ? "知识点" : "随笔") + "：" + title
+      )
+        .then(function () {
+          location.href = backHref;
+        })
+        .catch(function (e) {
+          btn.disabled = false;
+          btn.textContent = "删除";
+          alert("删除失败：" + e.message);
+        });
+    });
+  }
+
   function showError(text) {
     document.getElementById("head").innerHTML =
       '<div class="eyebrow">Not Found</div><h1>找不到这篇文章</h1>';
@@ -144,7 +199,7 @@
       '<p class="lede">' + B.esc(text) + "</p>" +
       '<p><a href="posts.html">← 全部随笔</a> &nbsp; <a href="notes.html">全部知识点 →</a></p>';
     document.getElementById("toc").style.display = "none";
-    document.title = "找不到文章 · 黄兴抗";
+    document.title = "找不到文章 · Seek answer";
   }
 
   /* ---------- 兼容旧链接：post.html#slug → post.html?p=slug ---------- */
@@ -213,7 +268,7 @@
             contentEl.innerHTML = mdToHtml(parts.body);
             renderToc();
 
-            document.title = title + " · 黄兴抗";
+            document.title = title + " · Seek answer";
             document.getElementById("title").textContent = title;
             document.getElementById("kind").textContent = isNote ? "Note" : "Post";
 
@@ -247,6 +302,8 @@
             back.innerHTML =
               '<a href="' + (isNote ? "notes.html" : "posts.html") + '">← 返回列表</a>';
             contentEl.appendChild(back);
+
+            mountEditBar(isNote ? "note" : "post", slug, title, isNote ? "notes.html" : "posts.html");
           })
           .catch(function (e2) {
             showError("读取正文失败：" + e2.message);

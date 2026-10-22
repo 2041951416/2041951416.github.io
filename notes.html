@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>知识点 · 黄兴抗</title>
+<title>知识点 · Seek answer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js"></script>
@@ -12,7 +12,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
     <nav class="nav">
       <a href="index.html" data-page="index">概览</a>
       <a href="plan.html" data-page="plan">学习计划</a>
@@ -28,8 +28,10 @@
     <section class="hero">
       <div class="eyebrow">Notes</div>
       <h1>知识点</h1>
-      <p class="lede">
-        一个概念想明白了就写一页。标准是「未来的自己能直接看懂」，不是写给别人的教程。
+      <p class="lede" id="page-lede">一个概念想明白了就写一页。标准是「未来的自己能直接看懂」，不是写给别人的教程。
+      </p>
+      <p id="new-note-slot" style="margin-top:1.4rem" hidden>
+        <a class="btn btn-accent" href="edit.html?new=note">新建知识点</a>
       </p>
     </section>
 
@@ -52,12 +54,13 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>© <span id="year">2026</span> Seek answer</span>
     <span>纯静态 · 无构建</span>
   </div>
 </footer>
 
 <script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
 <script>
 (function () {
   var B = window.Blog;
@@ -66,6 +69,20 @@
 
   B.mountHeader("notes");
   B.mountFooter();
+
+  if (window.BlogEditor) {
+    window.BlogEditor.loadSiteText()
+      .then(function (site) {
+        window.BlogEditor.applySiteText(site);
+        var l = (site.ledes || {})["notes"];
+        var n = document.getElementById("page-lede");
+        if (l && n) window.BlogEditor.setMultiline(n, l);
+      })
+      .catch(function () {});
+  }
+
+  var canEdit = window.BlogEditor && window.BlogEditor.isLoggedIn();
+  if (canEdit) document.getElementById("new-note-slot").hidden = false;
 
   function renderCards(list, q) {
     var host = document.getElementById("cards");
@@ -121,6 +138,15 @@
       }
 
       host.appendChild(a);
+
+      // 编辑链接放在卡片外面，避免 <a> 嵌套 <a>
+      if (canEdit) {
+        var editRow = document.createElement("div");
+        editRow.className = "card-edit-row";
+        editRow.innerHTML =
+          '<a class="entry-edit" href="edit.html?p=' + encodeURIComponent(n.slug) + '">编辑</a>';
+        host.appendChild(editRow);
+      }
     });
   }
 

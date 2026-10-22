@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>学习计划 · 黄兴抗</title>
+<title>学习计划 · Seek answer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js"></script>
@@ -12,7 +12,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
     <nav class="nav">
       <a href="index.html" data-page="index">概览</a>
       <a href="plan.html" data-page="plan">学习计划</a>
@@ -28,8 +28,7 @@
     <section class="hero">
       <div class="eyebrow">Roadmap</div>
       <h1>学习计划</h1>
-      <p class="lede">
-        从单片机基础到 PCB 布局布线，五条主线。勾选后自动记录完成日期，
+      <p class="lede" id="page-lede">从单片机基础到 PCB 布局布线，五条主线。勾选后自动记录完成日期，
         并计入下方的打卡记录。
       </p>
     </section>
@@ -59,7 +58,10 @@
     <section class="section" style="margin-top:2.4rem">
       <div class="section-head">
         <h2>阶段与任务</h2>
-        <span class="more" id="plan-total"></span>
+        <span>
+          <a class="entry-edit" id="edit-plan-link" href="edit.html?plan=1" hidden>编辑路线</a>
+          <span class="more" id="plan-total"></span>
+        </span>
       </div>
       <div id="phases"></div>
     </section>
@@ -131,12 +133,13 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>© <span id="year">2026</span> Seek answer</span>
     <span>纯静态 · 无构建</span>
   </div>
 </footer>
 
 <script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
 <script>
 (function () {
   var B = window.Blog;
@@ -145,7 +148,22 @@
 
   B.mountHeader("plan");
   B.mountFooter();
+
+  if (window.BlogEditor) {
+    window.BlogEditor.loadSiteText()
+      .then(function (site) {
+        window.BlogEditor.applySiteText(site);
+        var l = (site.ledes || {})["plan"];
+        var n = document.getElementById("page-lede");
+        if (l && n) window.BlogEditor.setMultiline(n, l);
+      })
+      .catch(function () {});
+  }
   B.installFlushHooks();
+
+  if (window.BlogEditor && window.BlogEditor.isLoggedIn()) {
+    document.getElementById("edit-plan-link").hidden = false;
+  }
 
   /* ---------- 同步状态条 ---------- */
 

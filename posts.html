@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>随笔 · 黄兴抗</title>
+<title>随笔 · Seek answer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js"></script>
@@ -12,7 +12,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
     <nav class="nav">
       <a href="index.html" data-page="index">概览</a>
       <a href="plan.html" data-page="plan">学习计划</a>
@@ -28,8 +28,10 @@
     <section class="hero">
       <div class="eyebrow">Posts</div>
       <h1>随笔</h1>
-      <p class="lede">
-        项目复盘、阶段总结、想不通的问题。比知识点长，也更乱——那是思考真实的样子。
+      <p class="lede" id="page-lede">项目复盘、阶段总结、想不通的问题。比知识点长，也更乱——那是思考真实的样子。
+      </p>
+      <p id="new-post-slot" style="margin-top:1.4rem" hidden>
+        <a class="btn btn-accent" href="edit.html?new=post">新建随笔</a>
       </p>
     </section>
 
@@ -46,17 +48,33 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>© <span id="year">2026</span> Seek answer</span>
     <span>纯静态 · 无构建</span>
   </div>
 </footer>
 
 <script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
 <script>
 (function () {
   var B = window.Blog;
   B.mountHeader("posts");
   B.mountFooter();
+
+  if (window.BlogEditor) {
+    window.BlogEditor.loadSiteText()
+      .then(function (site) {
+        window.BlogEditor.applySiteText(site);
+        var l = (site.ledes || {})["posts"];
+        var n = document.getElementById("page-lede");
+        if (l && n) window.BlogEditor.setMultiline(n, l);
+      })
+      .catch(function () {});
+  }
+
+  // 只看本地有没有凭证，不发请求。未登录时连「新建」都不渲染。
+  var canEdit = window.BlogEditor && window.BlogEditor.isLoggedIn();
+  if (canEdit) document.getElementById("new-post-slot").hidden = false;
 
   B.getJson("content/index.json")
     .then(function (manifest) {
@@ -89,7 +107,11 @@
           '<div class="entry-sub" style="margin-top:3px">' + B.esc(p.summary || "") + "</div>" +
           (tagHtml ? '<div class="tags">' + tagHtml + "</div>" : "") +
           "</div>" +
-          '<span class="entry-date">' + B.esc(p.date || "") + "</span>" +
+          '<span class="entry-date">' + B.esc(p.date || "") +
+          (canEdit
+            ? '<a class="entry-edit" href="edit.html?p=' + encodeURIComponent(p.slug) + '">编辑</a>'
+            : "") +
+          "</span>" +
           "</div>";
 
         li.appendChild(a);

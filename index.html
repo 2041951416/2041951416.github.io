@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>黄兴抗 · 嵌入式 & PCB 学习日志</title>
+<title>Seek answer · 嵌入式 & PCB 学习日志</title>
 <meta name="description" content="嵌入式与 PCB 的学习计划、知识点笔记与随笔。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
@@ -13,7 +13,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
     <nav class="nav">
       <a href="index.html" data-page="index">概览</a>
       <a href="plan.html" data-page="plan">学习计划</a>
@@ -84,14 +84,16 @@
     <section class="section">
       <div class="section-head"><h2>关于</h2></div>
       <div style="padding-top:1.2rem">
-        <p class="lede" style="font-size:0.92rem">
-          电子信息工程，即将毕业。做过的项目集中在单片机和 PCB 方向，
-          也在开源社区参与过一些 Spring 相关的工作。
-        </p>
-        <p class="lede" style="font-size:0.92rem">
-          这个站点是纯静态页面，没有构建步骤。想加内容就写一个 Markdown 文件，
-          在清单里登记一行。
-        </p>
+        <div id="about-body">
+          <p class="lede" style="font-size:0.92rem">
+            电子信息工程，即将毕业。做过的项目集中在单片机和 PCB 方向，
+            也在开源社区参与过一些 Spring 相关的工作。
+          </p>
+          <p class="lede" style="font-size:0.92rem">
+            这个站点是纯静态页面，没有构建步骤。想加内容就写一个 Markdown 文件，
+            在清单里登记一行。
+          </p>
+        </div>
         <p style="font-size:0.88rem;color:var(--ink-3);margin-top:1.4rem">
           <a href="https://github.com/2041951416" target="_blank" rel="noopener">GitHub</a>
           <span style="margin:0 .7em;color:var(--hairline-strong)">|</span>
@@ -107,12 +109,13 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>© <span id="year">2026</span> Seek answer</span>
     <span>纯静态 · 无构建</span>
   </div>
 </footer>
 
 <script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
 <script>
 (function () {
   var B = window.Blog;
@@ -120,6 +123,14 @@
   B.mountHeader("index");
   B.mountFooter();
   B.installFlushHooks();
+
+  // 站点文案：HTML 里已内置静态品牌，这里只是异步替换成 site.json 的内容。
+  // 所以即使请求失败或很慢，页面上也不会出现空白。
+  if (window.BlogEditor) {
+    window.BlogEditor.loadSiteText()
+      .then(window.BlogEditor.applySiteText)
+      .catch(function () {});
+  }
 
   function renderStats(plan, manifest, state) {
     var done = state.done || {};

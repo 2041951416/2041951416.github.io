@@ -1,12 +1,64 @@
-# 嵌入式 & PCB 学习日志
+# Seek answer · 嵌入式 & PCB 学习日志
 
-个人学习博客，纯静态页面，**没有构建步骤**。改名、加文章、调样式都是在网页上直接改文件。
+个人学习博客，纯静态页面，**没有构建步骤**。
 
 站点：<https://2041951416.github.io/>
 
 ---
 
-## 我要发一篇新随笔
+## 直接在网页上编辑（推荐）
+
+打开 <https://2041951416.github.io/edit.html> 登录后就能改文章、学习计划和首页文案，
+不用碰 Git。
+
+### 第一次要做的准备（约两分钟）
+
+1. GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
+2. **Generate new token**，名称随便填（比如 `blog-editor`）
+3. **Repository access** → **Only select repositories** → 只勾 `2041951416.github.io`
+4. **Repository permissions** → 找到 **Contents** → 选 **Read and write**
+   （其余全部保持 No access，尤其是 Workflows 不要给）
+5. **Expiration** 建议设 90 天
+6. 点 Generate，复制 `github_pat_` 开头的字符串
+
+回到 <https://2041951416.github.io/edit.html>，粘贴到输入框，点「保存并验证」。
+验证通过后会一直记住，直到你点「退出登录」。
+
+### 这个 token 有多大权力
+
+| 能做 | 不能做 |
+|---|---|
+| 改这个仓库里的任何文件（文章、页面、样式） | ❌ 改 `.github/workflows/`（GitHub 服务端强制拒绝） |
+| 提交、建分支 | ❌ 删除仓库 |
+| | ❌ 改仓库设置 |
+| | ❌ 访问你的其它仓库（token 只授权了这一个） |
+
+**但要清楚**：拿到这个 token 的人能改你的网站。所以
+- 只在自己的设备上登录
+- 不要粘贴到聊天、帖子或录屏里
+- 不用了就点「退出登录」，或者去 GitHub 撤销 token
+
+### 能改什么
+
+| 入口 | 能做的事 |
+|---|---|
+| 文章页的「编辑 / 删除」 | 改标题、标签、摘要、正文 |
+| 随笔页、知识点页的「新建」 | 写新文章 |
+| 学习计划页的「编辑路线」 | 增删改阶段和任务、调整顺序 |
+| `edit.html?site=1` | 改站名、首页标题、简介、各页导语 |
+
+导航标签、页脚文案、浏览器标题是固定的 —— 它们写错会导致入口失效，所以不开放编辑。
+
+**改任务的 id 会丢进度。** 进度是按 id 记的，编辑器会在你点「改 id」时提示影响多少条记录。
+只改标题永远安全。
+
+保存后大约 30 秒自动发布，编辑器会自己探测并提示「已上线」。
+
+---
+
+## 手动改文件（网页编辑器不好使时的退路）
+
+### 我要发一篇新随笔
 
 **一共两步。**
 
@@ -62,7 +114,7 @@ date: 2026-10-22
 
 ---
 
-## 我要加一条知识点
+### 我要加一条知识点
 
 流程和上面**完全一样**，只是：
 
@@ -73,7 +125,7 @@ date: 2026-10-22
 
 ---
 
-## 我要改学习路线
+### 我要改学习路线
 
 编辑 `content/plan.json`。结构是：
 
@@ -101,7 +153,7 @@ date: 2026-10-22
 
 ---
 
-## 我要开启云同步（多设备）
+### 我要开启云同步（多设备）
 
 不开启也能用，勾选记录只存在当前浏览器。开启后自动同步到你自己的私有 Gist。
 
@@ -191,18 +243,24 @@ D:\python311\python.exe tools\check.py
 ├── notes.html              知识点（卡片 + 全文搜索）
 ├── posts.html              随笔列表
 ├── post.html               单篇阅读器（?p=slug 路由，带目录）
+├── edit.html               网页编辑器（文章 / 计划 / 站点文案）
 ├── .github/workflows/
 │   └── pages.yml           部署流水线：推送 main 即自动发布
 ├── assets/
 │   ├── style.css           全部样式（设计 token 在 :root）
 │   ├── theme.js            深色模式，同步执行防闪屏
-│   └── app.js              取数、状态合并、进度、日历、Gist 同步
+│   ├── app.js              取数、状态合并、进度、日历、Gist 同步
+│   └── editor.js           编辑器的提交原语、front matter、文案渲染
 ├── content/
 │   ├── index.json          ★ 内容清单，加文章要改这里
 │   ├── plan.json           ★ 学习路线，改进度要改这里
+│   ├── site.json           ★ 站名、首页标题、各页导语
 │   ├── notes/*.md          知识点
 │   └── posts/*.md          随笔
-└── tools/check.py          一致性检查
+└── tools/
+    ├── check.py            一致性检查
+    ├── test-commit.js      提交原语对真实 API 的测试
+    └── test-editor.js      编辑器 UI 测试（拦截请求，不碰真实仓库）
 ```
 
 ---
@@ -235,3 +293,6 @@ D:\python311\python.exe tools\check.py
 - **`.nojekyll`**：让 GitHub Pages 跳过 Jekyll 处理，避免下划线开头的文件出问题。
 - **为什么用 Actions 部署而不是分支发布**：分支发布（legacy）模式下，删掉的文件可能长期残留在发布产物里——曾经删除的 `cnc-app/` 就这样在线上存活了几个月，且源站已无该文件却仍返回 200。改用 Actions 后每次 push 都生成一份全新 artifact，删除立即生效。`upload-pages-artifact` 会自动排除 `.git` 和 `.github`。
 - **改完推送就行**：不再需要手动触发部署。`main` 分支一推，workflow 自动构建发布，约 30 秒。
+- **编辑器为什么一次提交改两个文件**：改一篇文章要同时动 `.md` 和 `index.json`。分两次提交的话，中间失败会留下「清单指向不存在的文件」。所以用 Git Data API 的 blob → tree → commit → ref 一次性完成。
+- **编辑器的请求必须禁用 HTTP 缓存**：GitHub 的 `git/ref` 端点返回 `Cache-Control: max-age=60`，读到缓存的旧 ref 就会基于过期 base 建提交，PATCH 必现 422「Update is not a fast forward」。代码里所有请求都带 `cache: "no-store"`。
+- **为什么菜单上的导航不做成 JS 渲染**：品牌和导航写死在 HTML 里，`site.json` 只异步替换文本。这样即使请求失败或很慢，页面也不会闪出空白。

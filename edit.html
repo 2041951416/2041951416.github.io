@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>编辑 · Seek answer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap editor">
+    <a class="brand" href="index.html">Seek answer<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap editor">
+
+    <!-- 登录面板 -->
+    <section id="login-panel" class="panel" hidden>
+      <h3>登录后才能编辑</h3>
+      <p>
+        这里没有账号密码。编辑权限由你自己生成的 GitHub 凭证决定，
+        只有持有它的人才能改动这个站点。
+      </p>
+      <ol>
+        <li>GitHub → Settings → Developer settings → <strong>Personal access tokens → Fine-grained tokens</strong></li>
+        <li>Generate new token，<strong>Repository access</strong> 选 <strong>Only select repositories</strong>，只勾选 <code>2041951416.github.io</code></li>
+        <li><strong>Repository permissions → Contents: Read and write</strong>，其余全部保持 No access</li>
+        <li>有效期建议不超过 90 天</li>
+        <li>复制生成的 token（<code>github_pat_</code> 开头），粘贴到下面</li>
+      </ol>
+      <p class="hint">
+        ⚠️ 这个 token 等于本站的写入权限。只在自己的设备上使用，
+        不要粘贴到聊天、帖子或录屏里。它不能访问你的其它仓库，
+        也不能改动部署配置。
+      </p>
+
+      <div class="field">
+        <label for="pat">Fine-grained token</label>
+        <input type="password" id="pat" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+        <button class="btn btn-accent" id="btn-login" type="button">保存并验证</button>
+        <button class="btn" id="btn-logout" type="button" hidden>退出登录</button>
+      </div>
+
+      <p class="hint" id="login-msg" style="min-height:1.4em"></p>
+    </section>
+
+    <!-- 状态条 -->
+    <div class="sync-bar" id="status-bar" hidden></div>
+
+    <!-- 文章编辑器 -->
+    <section id="article-editor" hidden>
+      <div class="hero" style="padding-block:32px 20px">
+        <div class="eyebrow" id="mode-label">编辑</div>
+        <h1 id="editor-title">编辑文章</h1>
+      </div>
+
+      <div class="editor-grid">
+        <div>
+          <div class="field">
+            <label for="f-slug">Slug（网址标识，发布后不要改）</label>
+            <input type="text" id="f-slug" autocomplete="off" spellcheck="false" placeholder="例：stm32-clock-tree">
+            <div class="field-error" id="e-slug"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-title">标题</label>
+            <input type="text" id="f-title" autocomplete="off" placeholder="文章标题">
+            <div class="field-error" id="e-title"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-date">日期（YYYY-MM-DD）</label>
+            <input type="text" id="f-date" autocomplete="off" spellcheck="false" placeholder="2026-10-22" inputmode="numeric">
+            <div class="field-error" id="e-date"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-tags">标签（用逗号分隔）</label>
+            <input type="text" id="f-tags" autocomplete="off" placeholder="STM32, 时钟, PLL">
+          </div>
+
+          <div class="field">
+            <label for="f-summary">摘要（会显示在列表和搜索结果里）</label>
+            <input type="text" id="f-summary" autocomplete="off" placeholder="一句话说清这篇讲什么">
+            <div class="field-error" id="e-summary"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-body">正文（Markdown）</label>
+            <textarea id="f-body" spellcheck="false" placeholder="## 小标题&#10;&#10;正文…"></textarea>
+            <div class="field-error" id="e-body"></div>
+          </div>
+
+          <div class="editor-actions">
+            <button class="btn btn-accent" id="btn-save" type="button">保存</button>
+            <button class="btn" id="btn-view" type="button">查看线上</button>
+            <span class="spacer"></span>
+            <span class="entry-date" id="dirty-hint"></span>
+          </div>
+        </div>
+
+        <div class="preview-pane">
+          <div class="preview-label">预览</div>
+          <article class="prose" id="preview"></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 站点文案编辑器 -->
+    <section id="site-editor" hidden>
+      <div class="hero" style="padding-block:32px 20px">
+        <div class="eyebrow">Site Copy</div>
+        <h1>编辑站点文案</h1>
+        <p class="lede">
+          这里改的是首页标题、简介和几个页面的导语。
+          导航标签、页脚和浏览器标题是固定的，改不了 —— 它们一旦写错会把入口弄丢。
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="s-brand">站名</label>
+        <input type="text" id="s-brand">
+      </div>
+      <div class="field">
+        <label for="s-tagline">副标题（斜杠后面那一段）</label>
+        <input type="text" id="s-tagline">
+      </div>
+      <div class="field">
+        <label for="s-hero-title">首页大标题（换行用回车）</label>
+        <textarea id="s-hero-title" style="min-height:90px"></textarea>
+      </div>
+      <div class="field">
+        <label for="s-hero-lede">首页简介</label>
+        <textarea id="s-hero-lede" style="min-height:90px"></textarea>
+      </div>
+      <div class="field">
+        <label for="s-about">「关于」段落（每行一段）</label>
+        <textarea id="s-about" style="min-height:120px"></textarea>
+      </div>
+      <div class="field">
+        <label for="s-lede-plan">学习计划页导语</label>
+        <textarea id="s-lede-plan" style="min-height:70px"></textarea>
+      </div>
+      <div class="field">
+        <label for="s-lede-notes">知识点页导语</label>
+        <textarea id="s-lede-notes" style="min-height:70px"></textarea>
+      </div>
+      <div class="field">
+        <label for="s-lede-posts">随笔页导语</label>
+        <textarea id="s-lede-posts" style="min-height:70px"></textarea>
+      </div>
+
+      <div class="editor-actions">
+        <button class="btn btn-accent" id="btn-site-save" type="button">保存文案</button>
+        <a class="btn" href="index.html">查看首页</a>
+      </div>
+    </section>
+
+    <!-- 计划编辑器 -->
+    <section id="plan-editor" class="plan-editor" hidden>
+      <div class="hero" style="padding-block:32px 20px">
+        <div class="eyebrow">Roadmap</div>
+        <h1>编辑学习路线</h1>
+        <p class="lede">
+          改标题是安全的。改 <strong>id</strong> 会让对应的打卡记录失去关联，操作前会提示影响多少条。
+        </p>
+      </div>
+      <div id="plan-body"></div>
+      <div class="editor-actions">
+        <button class="btn btn-accent" id="btn-plan-save" type="button">保存路线</button>
+      </div>
+    </section>
+
+    <div class="empty" id="editor-empty" hidden>
+      <p>没有指定要编辑的内容。</p>
+      <p style="font-size:0.82em">从 <a href="posts.html">随笔</a>、<a href="notes.html">知识点</a> 或 <a href="plan.html">学习计划</a> 里的编辑按钮进入。</p>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap editor">
+    <span>© <span id="year">2026</span> Seek answer</span>
+    <span>编辑页 · 不参与站点导航</span>
+  </div>
+</footer>
+
+<script src="https://fastly.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/editor.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+  var E = window.BlogEditor;
+
+  B.mountHeader(null);
+  B.mountFooter();
+
+  var $ = B.$;
+  var el = B.el;
+
+  var loggedIn = E.isLoggedIn();
+  var dirty = false;
+  var initial = null;      // 用于零改动检测
+  var manifest = null;
+  var current = null;      // { kind, slug, entry, text }
+  var saving = false;
+
+  /* ---------- 状态条 ---------- */
+
+  function setStatus(mode, text, extra) {
+    var bar = $("#status-bar");
+    bar.hidden = false;
+    var cls = mode === "ok" ? "ok" : mode === "busy" ? "busy" : mode === "warn" ? "warn" : "";
+    bar.innerHTML =
+      '<span><i class="sync-dot ' + cls + '"></i>' + B.esc(text) + "</span>" +
+      '<span class="actions">' + (extra || "") + "</span>";
+  }
+
+  /* ---------- 登录 ---------- */
+
+  function showLogin(msg, isErr) {
+    $("#login-panel").hidden = false;
+    $("#btn-logout").hidden = !E.isLoggedIn();
+    var m = $("#login-msg");
+    m.textContent = msg || "";
+    m.style.color = isErr ? "#c9553d" : "var(--accent)";
+  }
+
+  function renderAuth() {
+    if (E.isLoggedIn()) {
+      $("#login-panel").hidden = true;
+      setStatus("ok", "已登录，可以编辑");
+    } else {
+      showLogin("");
+    }
+  }
+
+  $("#btn-login").addEventListener("click", function () {
+    var v = $("#pat").value.trim();
+    if (!v) {
+      showLogin("请先粘贴 token", true);
+      return;
+    }
+    showLogin("正在验证权限…");
+    $("#btn-login").disabled = true;
+    E.login(v)
+      .then(function (info) {
+        $("#pat").value = "";
+        showLogin("");
+        $("#login-panel").hidden = true;
+        setStatus("ok", "已登录 · " + info.login);
+        boot();
+      })
+      .catch(function (e) {
+        // 失败时不存 token
+        showLogin(e.message, true);
+      })
+      .then(function () {
+        $("#btn-login").disabled = false;
+      });
+  });
+
+  $("#btn-logout").addEventListener("click", function () {
+    if (dirty && !confirm("有未提交的修改，确定退出？")) return;
+    E.logout().then(function () {
+      dirty = false;
+      $("#article-editor").hidden = true;
+      $("#plan-editor").hidden = true;
+      showLogin("已退出。");
+    });
+  });
+
+  /* ---------- 路由 ---------- */
+
+  function getParam(name) {
+    var m = new RegExp("[?&]" + name + "=([^&]*)").exec(location.search);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function route() {
+    if (!E.isLoggedIn()) {
+      showLogin("");
+      return;
+    }
+    var slug = getParam("p");
+    var isNew = getParam("new");
+    var isPlan = getParam("plan");
+    var isSite = getParam("site");
+
+    if (isPlan) return bootPlan();
+    if (isSite) return bootSite();
+    if (slug) return bootArticle("edit", slug);
+    if (isNew === "post" || isNew === "note") return bootArticle("new", isNew === "note" ? "note" : "post");
+
+    $("#editor-empty").hidden = false;
+  }
+
+  /* ---------- 文章编辑器 ---------- */
+
+  function bootArticle(mode, arg) {
+    $("#article-editor").hidden = false;
+    $("#plan-editor").hidden = true;
+
+    var isNew = mode === "new";
+    var kind = isNew ? arg : null;
+
+    return B.getJson("content/index.json")
+      .then(function (m) {
+        manifest = m;
+
+        if (isNew) {
+          $("#mode-label").textContent = kind === "note" ? "新建知识点" : "新建随笔";
+          $("#editor-title").textContent = kind === "note" ? "新建知识点" : "新建随笔";
+          $("#f-slug").readOnly = false;
+          $("#f-slug").value = "";
+          $("#f-title").value = "";
+          $("#f-date").value = B.today();
+          $("#f-tags").value = "";
+          $("#f-summary").value = "";
+          $("#f-body").value = "";
+          current = { kind: kind, slug: null, entry: null, text: "" };
+          snapshot();
+          renderPreview();
+          return;
+        }
+
+        // 编辑已有文章
+        var found = null;
+        (m.posts || []).forEach(function (p) {
+          if (p.slug === arg) found = { kind: "post", entry: p };
+        });
+        if (!found) {
+          (m.notes || []).forEach(function (n) {
+            if (n.slug === arg) found = { kind: "note", entry: n };
+          });
+        }
+        if (!found) {
+          $("#article-editor").hidden = true;
+          $("#editor-empty").hidden = false;
+          $("#editor-empty").innerHTML =
+            "<p>找不到「" + B.esc(arg) + "」。</p><p style='font-size:0.82em'><a href='posts.html'>回到随笔</a></p>";
+          return;
+        }
+
+        kind = found.kind;
+        var dir = kind === "note" ? "content/notes/" : "content/posts/";
+
+        return E.getFile(dir + arg + ".md").then(function (f) {
+          var fm = E.parseFM(f.text);
+          $("#mode-label").textContent = kind === "note" ? "知识点" : "随笔";
+          $("#editor-title").textContent = "编辑";
+          $("#f-slug").readOnly = true;
+          $("#f-slug").value = arg;
+          $("#f-title").value = fm.meta.title || found.entry.title || "";
+          $("#f-date").value = fm.meta.date || found.entry.date || B.today();
+          $("#f-tags").value = (fm.meta.tags || found.entry.tags || []).join(", ");
+          $("#f-summary").value = fm.meta.summary || found.entry.summary || "";
+          $("#f-body").value = fm.body;
+          current = { kind: kind, slug: arg, entry: found.entry, text: f.text, fm: fm };
+          snapshot();
+          renderPreview();
+        });
+      })
+      .catch(function (e) {
+        setStatus("warn", "加载失败：" + e.message);
+      });
+  }
+
+  function readFields() {
+    return {
+      slug: $("#f-slug").value.trim(),
+      title: $("#f-title").value.trim(),
+      date: $("#f-date").value,
+      tags: E.parseTags($("#f-tags").value),
+      summary: $("#f-summary").value.trim(),
+      body: $("#f-body").value,
+    };
+  }
+
+  function snapshot() {
+    initial = JSON.stringify(readFields());
+    setDirty(false);
+  }
+
+  function setDirty(v) {
+    dirty = v;
+    $("#dirty-hint").textContent = v ? "有未提交的修改" : "";
+    document.title = (v ? "• " : "") + "编辑 · Seek answer";
+  }
+
+  function isChanged() {
+    return initial !== null && JSON.stringify(readFields()) !== initial;
+  }
+
+  function renderPreview() {
+    var host = $("#preview");
+    try {
+      host.innerHTML = E.preview($("#f-body").value);
+    } catch (e) {
+      host.textContent = "预览不可用：" + e.message;
+    }
+  }
+
+  var renderPreviewDebounced = B.debounce(renderPreview, 200);
+
+  function clearErrors() {
+    ["slug", "title", "date", "summary", "body"].forEach(function (k) {
+      $("#e-" + k).textContent = "";
+    });
+  }
+
+  function validate(f) {
+    clearErrors();
+    var ok = true;
+
+    var slugErr = E.validateSlug(f.slug, current && current.kind, manifest, current && current.slug);
+    if (slugErr) {
+      $("#e-slug").textContent = slugErr;
+      ok = false;
+    }
+    if (!f.title) {
+      $("#e-title").textContent = "请填写标题";
+      ok = false;
+    } else if (f.title.length > 120) {
+      $("#e-title").textContent = "标题不要超过 120 个字符";
+      ok = false;
+    }
+    if (!f.date || !/^\d{4}-\d{2}-\d{2}$/.test(f.date)) {
+      $("#e-date").textContent = "请选择日期";
+      ok = false;
+    }
+    if (!f.summary) {
+      $("#e-summary").textContent = "请填写摘要，它会用于列表和搜索";
+      ok = false;
+    }
+    if (!f.body.trim()) {
+      $("#e-body").textContent = "正文不能为空";
+      ok = false;
+    }
+    return ok;
+  }
+
+  $("#btn-save").addEventListener("click", function () {
+    if (saving) return;
+    var f = readFields();
+    if (!validate(f)) {
+      setStatus("warn", "还有几处需要修正");
+      return;
+    }
+
+    // 编辑模式下 slug 不可改
+    var kind = current.kind;
+    var dir = kind === "note" ? "content/notes/" : "content/posts/";
+    var mdPath = dir + f.slug + ".md";
+    var idxPath = "content/index.json";
+    var entry = E.buildEntry(f);
+    var msg = (current.slug ? "编辑" : "新建") + (kind === "note" ? "知识点" : "随笔") + "：" + f.title;
+
+    saving = true;
+    $("#btn-save").disabled = true;
+    setStatus("busy", "正在提交…");
+
+    // 用 build 形态：重试时会基于最新 manifest 重新计算，不会覆盖别人的改动
+    E.commit(
+      {
+        build: function (ctx) {
+          return ctx.getFile(idxPath).then(function (cur) {
+            var idx = JSON.parse(cur.text);
+            var next = E.applyManifest(idx, kind, f.slug, entry, current.slug);
+            var fm = current.fm || { meta: {}, eol: "\n", bom: false };
+
+            // 合并而不是重建：文章里可能有我这一版不认识的 front matter 键，
+            // 直接覆盖会把它们悄悄删掉。
+            var meta = {};
+            Object.keys(fm.meta || {}).forEach(function (k) {
+              meta[k] = fm.meta[k];
+            });
+            meta.title = f.title;
+            meta.tags = f.tags;
+            meta.summary = f.summary;
+            meta.date = f.date;
+
+            var text = E.serializeFM(meta, f.body, { eol: fm.eol, bom: fm.bom });
+
+            var put = {};
+            put[mdPath] = text;
+            // 换 slug：把旧文件删掉
+            var del = [];
+            if (current.slug && current.slug !== f.slug) {
+              del.push(dir + current.slug + ".md");
+            }
+            put[idxPath] = JSON.stringify(next, null, 2) + "\n";
+            return { put: put, del: del };
+          });
+        },
+      },
+      msg
+    )
+      .then(function (res) {
+        if (!res.changed) {
+          setStatus("ok", "没有改动，未提交");
+          saving = false;
+          $("#btn-save").disabled = false;
+          return;
+        }
+        snapshot(); // 清除脏标记
+        setStatus("busy", "已提交 " + E.shortSha(res.sha) + " · 等待上线…");
+        return E.waitForDeploy(f.slug).then(function (d) {
+          if (d.ok) {
+            setStatus("ok", "已上线", '<a class="btn btn-accent" href="post.html?p=' + encodeURIComponent(f.slug) + '">查看文章 →</a>');
+          } else {
+            setStatus("ok", "已提交，但探测超时。约一分钟后刷新即可看到。", '<a class="btn" href="post.html?p=' + encodeURIComponent(f.slug) + '">查看文章 →</a>');
+          }
+          // 更新地址栏，避免刷新后回到旧状态
+          history.replaceState(null, "", "edit.html?p=" + encodeURIComponent(f.slug));
+          current.slug = f.slug;
+          $("#f-slug").readOnly = true;
+        });
+      })
+      .catch(function (e) {
+        setStatus("warn", e.message);
+        if (/401/.test(e.message)) {
+          // 凭证失效：清掉 token，但保留用户输入
+          E.logout();
+          showLogin("凭证已失效，请重新粘贴 token。你已输入的内容还在页面上。", true);
+        }
+      })
+      .then(function () {
+        saving = false;
+        $("#btn-save").disabled = false;
+      });
+  });
+
+  $("#btn-view").addEventListener("click", function () {
+    var s = $("#f-slug").value.trim();
+    if (s) window.open("post.html?p=" + encodeURIComponent(s), "_blank");
+  });
+
+  /* 输入监听 */
+  ["f-slug", "f-title", "f-date", "f-tags", "f-summary"].forEach(function (id) {
+    $("#" + id).addEventListener("input", function () {
+      if (isChanged()) setDirty(true);
+      else if (initial !== null) setDirty(false);
+    });
+  });
+  $("#f-body").addEventListener("input", function () {
+    if (isChanged()) setDirty(true);
+    else if (initial !== null) setDirty(false);
+    renderPreviewDebounced();
+  });
+
+  /* 未保存守卫 */
+  window.addEventListener("beforeunload", function (e) {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || !dirty) return;
+    if (a.getAttribute("href").indexOf("edit.html") === 0) return;
+    if (!confirm("有未提交的修改，确定离开？")) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  /* ---------- 计划编辑器 ---------- */
+
+  var planDraft = null;
+  var doneMap = {};
+
+  /** 统计某个 id 下有多少条进度记录（用于改 id 前的警告） */
+  function progressOf(id) {
+    var n = 0;
+    Object.keys(doneMap).forEach(function (k) {
+      if (k === id) n++;
+    });
+    return n;
+  }
+
+  function bootPlan() {
+    $("#plan-editor").hidden = false;
+    $("#article-editor").hidden = true;
+
+    doneMap = (B.getState() && B.getState().done) || {};
+
+    B.loadPlan().then(function (plan) {
+      planDraft = JSON.parse(JSON.stringify(plan));
+      renderPlanEditor();
+    }).catch(function (e) {
+      $("#plan-body").innerHTML = "<p class='lede'>加载路线失败：" + B.esc(e.message) + "</p>";
+    });
+  }
+
+  function renderPlanEditor() {
+    var host = $("#plan-body");
+    host.innerHTML = "";
+
+    planDraft.phases.forEach(function (ph, pi) {
+      var block = document.createElement("div");
+      block.className = "phase-block";
+
+      var head = document.createElement("div");
+      head.className = "phase-head-row";
+      head.innerHTML =
+        '<span class="plan-id">' + B.esc(ph.id) + "</span>" +
+        '<input type="text" class="phase-title-input" value="' + B.esc(ph.title) + '" placeholder="阶段标题">' +
+        '<span class="plan-row-actions">' +
+        '<button class="icon-btn" type="button" data-act="up-phase" data-i="' + pi + '">↑</button>' +
+        '<button class="icon-btn" type="button" data-act="down-phase" data-i="' + pi + '">↓</button>' +
+        '<button class="icon-btn danger" type="button" data-act="del-phase" data-i="' + pi + '">删除阶段</button>' +
+        "</span>";
+      block.appendChild(head);
+
+      head.querySelector(".phase-title-input").addEventListener("input", function (e) {
+        planDraft.phases[pi].title = e.target.value;
+        setDirty(true);
+      });
+
+      (ph.tasks || []).forEach(function (t, ti) {
+        var row = document.createElement("div");
+        row.className = "plan-task-row";
+
+        var n = progressOf(t.id);
+        var warn = n > 0 ? '<span class="plan-warn">已有 ' + n + " 条进度</span>" : "";
+
+        row.innerHTML =
+          '<input type="text" class="task-id" value="' + B.esc(t.id) + '" readonly title="id 不可直接修改">' +
+          '<input type="text" class="task-title" value="' + B.esc(t.title) + '" placeholder="任务描述">' +
+          warn +
+          '<span class="plan-row-actions">' +
+          '<button class="icon-btn" type="button" data-act="rename-id" data-pi="' + pi + '" data-ti="' + ti + '">改 id</button>' +
+          '<button class="icon-btn" type="button" data-act="up-task" data-pi="' + pi + '" data-ti="' + ti + '">↑</button>' +
+          '<button class="icon-btn" type="button" data-act="down-task" data-pi="' + pi + '" data-ti="' + ti + '">↓</button>' +
+          '<button class="icon-btn danger" type="button" data-act="del-task" data-pi="' + pi + '" data-ti="' + ti + '">删除</button>' +
+          "</span>";
+
+        row.querySelector(".task-title").addEventListener("input", function (e) {
+          planDraft.phases[pi].tasks[ti].title = e.target.value;
+          setDirty(true);
+        });
+
+        block.appendChild(row);
+      });
+
+      var add = document.createElement("div");
+      add.className = "add-row";
+      add.innerHTML = '<button class="btn" type="button" data-act="add-task" data-i="' + pi + '">+ 加一个任务</button>';
+      block.appendChild(add);
+
+      host.appendChild(block);
+    });
+
+    var addPhase = document.createElement("div");
+    addPhase.style.marginBlock = "20px 0";
+    addPhase.innerHTML = '<button class="btn" type="button" data-act="add-phase">+ 加一个阶段</button>';
+    host.appendChild(addPhase);
+  }
+
+  /** 生成阶段内下一个可用的任务 id */
+  function nextTaskId(ph) {
+    var max = 0;
+    (ph.tasks || []).forEach(function (t) {
+      var m = /-t(\d+)$/.exec(t.id);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return ph.id + "-t" + (max + 1);
+  }
+
+  function allIds() {
+    var ids = {};
+    planDraft.phases.forEach(function (ph) {
+      ids[ph.id] = true;
+      (ph.tasks || []).forEach(function (t) {
+        ids[t.id] = true;
+      });
+    });
+    return ids;
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest("[data-act]");
+    if (!btn || !planDraft) return;
+    var act = btn.dataset.act;
+    var pi = parseInt(btn.dataset.i || btn.dataset.pi, 10);
+    var ti = parseInt(btn.dataset.ti, 10);
+
+    if (act === "add-task") {
+      var ph = planDraft.phases[pi];
+      if (!ph.tasks) ph.tasks = [];
+      ph.tasks.push({ id: nextTaskId(ph), title: "" });
+      setDirty(true);
+      renderPlanEditor();
+      return;
+    }
+
+    if (act === "add-phase") {
+      var used = allIds();
+      var n = planDraft.phases.length + 1;
+      while (used["p" + n]) n++;
+      planDraft.phases.push({ id: "p" + n, title: "新阶段", tasks: [] });
+      setDirty(true);
+      renderPlanEditor();
+      return;
+    }
+
+    if (act === "del-task") {
+      var t = planDraft.phases[pi].tasks[ti];
+      var cnt = progressOf(t.id);
+      var msg = cnt
+        ? "这个任务已有 " + cnt + " 条进度记录。\n\n删除任务不会删掉进度数据（它仍留在同步数据里），但那部分记录会变成孤立的。\n\n确定删除？"
+        : "确定删除这个任务？";
+      if (!confirm(msg)) return;
+      planDraft.phases[pi].tasks.splice(ti, 1);
+      setDirty(true);
+      renderPlanEditor();
+      return;
+    }
+
+    if (act === "del-phase") {
+      var phase = planDraft.phases[pi];
+      var total = 0;
+      (phase.tasks || []).forEach(function (x) {
+        total += progressOf(x.id);
+      });
+      var pm = "确定删除阶段「" + phase.title + "」？";
+      if (total) pm += "\n\n该阶段下有 " + total + " 条进度记录，删除后这些记录会成为孤立数据。";
+      if (!confirm(pm)) return;
+      planDraft.phases.splice(pi, 1);
+      setDirty(true);
+      renderPlanEditor();
+      return;
+    }
+
+    if (act === "rename-id") {
+      var task = planDraft.phases[pi].tasks[ti];
+      var cnt2 = progressOf(task.id);
+      var warning = cnt2
+        ? "改 id 会让 " + cnt2 + " 条进度记录失去关联（等于清零）。\n\n"
+        : "";
+      var next = prompt(warning + "当前 id：" + task.id + "\n输入新的 id（只能用小写字母、数字、连字符）：", task.id);
+      if (next === null) return;
+      next = next.trim();
+      if (next === task.id) return;
+      if (!E.SLUG_RE.test(next)) {
+        alert("id 格式不对：只能用小写字母、数字、连字符和下划线，且不能以连字符开头。");
+        return;
+      }
+      if (allIds()[next]) {
+        alert("这个 id 已经被占用了。");
+        return;
+      }
+      task.id = next;
+      setDirty(true);
+      renderPlanEditor();
+      return;
+    }
+
+    if (act === "up-task") {
+      var arr = planDraft.phases[pi].tasks;
+      if (ti > 0) {
+        var tmp = arr[ti - 1];
+        arr[ti - 1] = arr[ti];
+        arr[ti] = tmp;
+        setDirty(true);
+        renderPlanEditor();
+      }
+      return;
+    }
+
+    if (act === "down-task") {
+      var arr2 = planDraft.phases[pi].tasks;
+      if (ti < arr2.length - 1) {
+        var tmp2 = arr2[ti + 1];
+        arr2[ti + 1] = arr2[ti];
+        arr2[ti] = tmp2;
+        setDirty(true);
+        renderPlanEditor();
+      }
+      return;
+    }
+
+    if (act === "up-phase") {
+      if (pi > 0) {
+        var tp = planDraft.phases[pi - 1];
+        planDraft.phases[pi - 1] = planDraft.phases[pi];
+        planDraft.phases[pi] = tp;
+        setDirty(true);
+        renderPlanEditor();
+      }
+      return;
+    }
+
+    if (act === "down-phase") {
+      if (pi < planDraft.phases.length - 1) {
+        var tp2 = planDraft.phases[pi + 1];
+        planDraft.phases[pi + 1] = planDraft.phases[pi];
+        planDraft.phases[pi] = tp2;
+        setDirty(true);
+        renderPlanEditor();
+      }
+      return;
+    }
+  });
+
+  /** 校验整份路线 */
+  function validatePlan(p) {
+    var errs = [];
+    var ids = {};
+    if (!p.phases || !p.phases.length) {
+      errs.push("至少要有一个阶段");
+      return errs;
+    }
+    p.phases.forEach(function (ph, i) {
+      if (!ph.id) errs.push("第 " + (i + 1) + " 个阶段缺少 id");
+      else if (!E.SLUG_RE.test(ph.id)) errs.push("阶段 id「" + ph.id + "」格式不对");
+      else if (ids[ph.id]) errs.push("阶段 id 重复：" + ph.id);
+      else ids[ph.id] = true;
+
+      if (!String(ph.title || "").trim()) errs.push("第 " + (i + 1) + " 个阶段标题为空");
+
+      (ph.tasks || []).forEach(function (t, j) {
+        if (!t.id) errs.push("阶段 " + ph.id + " 第 " + (j + 1) + " 个任务缺少 id");
+        else if (!E.SLUG_RE.test(t.id)) errs.push("任务 id「" + t.id + "」格式不对");
+        else if (ids[t.id]) errs.push("任务 id 重复：" + t.id);
+        else ids[t.id] = true;
+
+        if (!String(t.title || "").trim()) errs.push("任务 " + t.id + " 的描述为空");
+      });
+    });
+    return errs;
+  }
+
+  $("#btn-plan-save").addEventListener("click", function () {
+    if (!planDraft) return;
+    var errs = validatePlan(planDraft);
+    if (errs.length) {
+      setStatus("warn", errs.slice(0, 3).join("；"));
+      return;
+    }
+
+    setStatus("busy", "正在提交…");
+    var btn = this;
+    btn.disabled = true;
+
+    var text = JSON.stringify(planDraft, null, 2) + "\n";
+    E.commit({ put: { "content/plan.json": text } }, "调整学习路线")
+      .then(function (res) {
+        if (!res.changed) {
+          setStatus("ok", "没有改动，未提交");
+          return;
+        }
+        setDirty(false);
+        setStatus(
+          "ok",
+          "已提交 " + E.shortSha(res.sha) + " · 约 30 秒后生效",
+          '<a class="btn" href="plan.html">查看计划页 →</a>'
+        );
+      })
+      .catch(function (e) {
+        setStatus("warn", e.message);
+      })
+      .then(function () {
+        btn.disabled = false;
+      });
+  });
+
+  /* ---------- 站点文案 ---------- */
+
+  function bootSite() {
+    $("#site-editor").hidden = false;
+    $("#article-editor").hidden = true;
+    $("#plan-editor").hidden = true;
+
+    E.loadSiteText()
+      .then(function (site) {
+        $("#s-brand").value = site.brand || "";
+        $("#s-tagline").value = site.tagline || "";
+        $("#s-hero-title").value = (site.hero && site.hero.title) || "";
+        $("#s-hero-lede").value = (site.hero && site.hero.lede) || "";
+        $("#s-about").value = (site.about || []).join("\n");
+        var l = site.ledes || {};
+        $("#s-lede-plan").value = l.plan || "";
+        $("#s-lede-notes").value = l.notes || "";
+        $("#s-lede-posts").value = l.posts || "";
+        snapshotSite();
+      })
+      .catch(function (e) {
+        setStatus("warn", "读取文案失败：" + e.message);
+      });
+  }
+
+  function readSite() {
+    return {
+      brand: $("#s-brand").value.trim(),
+      tagline: $("#s-tagline").value.trim(),
+      hero: {
+        eyebrow: "Study Log",
+        title: $("#s-hero-title").value,
+        lede: $("#s-hero-lede").value,
+      },
+      about: $("#s-about")
+        .value.split(/\n+/)
+        .map(function (s) {
+          return s.trim();
+        })
+        .filter(Boolean),
+      ledes: {
+        plan: $("#s-lede-plan").value,
+        notes: $("#s-lede-notes").value,
+        posts: $("#s-lede-posts").value,
+      },
+    };
+  }
+
+  function snapshotSite() {
+    initial = JSON.stringify(readSite());
+    setDirty(false);
+  }
+
+  ["s-brand", "s-tagline", "s-hero-title", "s-hero-lede", "s-about",
+   "s-lede-plan", "s-lede-notes", "s-lede-posts"].forEach(function (id) {
+    var node = $("#" + id);
+    if (!node) return;
+    node.addEventListener("input", function () {
+      if (initial !== null && JSON.stringify(readSite()) !== initial) setDirty(true);
+      else if (initial !== null) setDirty(false);
+    });
+  });
+
+  $("#btn-site-save").addEventListener("click", function () {
+    var site = readSite();
+    if (!site.brand) {
+      setStatus("warn", "站名不能为空");
+      return;
+    }
+
+    setStatus("busy", "正在提交…");
+    var btn = this;
+    btn.disabled = true;
+
+    E.commit({ put: { "content/site.json": JSON.stringify(site, null, 2) + "\n" } }, "编辑站点文案")
+      .then(function (res) {
+        if (!res.changed) {
+          setStatus("ok", "没有改动，未提交");
+          return;
+        }
+        snapshotSite();
+        // 清掉短期缓存，让本页立刻看到新文案
+        try {
+          localStorage.removeItem("blog.siteCache");
+        } catch (e) {}
+        setStatus(
+          "ok",
+          "已提交 " + E.shortSha(res.sha) + " · 约 30 秒后生效",
+          '<a class="btn" href="index.html">查看首页 →</a>'
+        );
+      })
+      .catch(function (e) {
+        setStatus("warn", e.message);
+      })
+      .then(function () {
+        btn.disabled = false;
+      });
+  });
+
+  /* ---------- 启动 ---------- */
+
+  function boot() {
+    renderAuth();
+    if (!E.isLoggedIn()) return;
+    $("#status-bar").hidden = false;
+    route();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

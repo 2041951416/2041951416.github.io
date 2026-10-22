@@ -467,6 +467,38 @@ function fixture() {
   if (/401|无效|过期/.test(msg)) pass("显示了明确的错误", msg.slice(0, 50));
   else fail("错误提示", msg);
 
+  /* 回归：验证流程不得创建 ref。
+     曾经用「建临时分支」来证明写权限，但 refs/heads/* 只能指向 commit，
+     指向 blob 会被服务端以 422 "Reference update failed" 拒绝，
+     导致所有合法 token 都被判定为失败。 */
+  console.log("\n[8b] 验证流程不碰分支");
+  reset();
+  repo.calls.length = 0;
+  tokenValid = true;
+  await open("edit.html", { logged: false });
+  await page.waitForSelector("#pat", { timeout: 8000 });
+  await page.type("#pat", "ghp_goodtoken");
+  await page.click("#btn-login");
+  await new Promise((r) => setTimeout(r, 1500));
+
+  const refPosts = repo.calls.filter((c) => c.method === "POST" && /\/git\/refs/.test(c.path));
+  const refDeletes = repo.calls.filter((c) => c.method === "DELETE" && /\/git\/refs/.test(c.path));
+  const blobPosts = repo.calls.filter((c) => c.method === "POST" && c.path.endsWith("/git/blobs"));
+
+  if (refPosts.length === 0 && refDeletes.length === 0) pass("验证时不创建也不删除任何 ref");
+  else
+    fail(
+      "验证流程碰了 ref",
+      JSON.stringify(refPosts.concat(refDeletes).map((c) => c.method + " " + c.path))
+    );
+
+  if (blobPosts.length >= 1) pass("用创建 blob 来验证写权限", blobPosts.length + " 次");
+  else fail("没有验证写权限", "未创建 blob");
+
+  const okStored = await page.evaluate(() => localStorage.getItem("blog.editPat"));
+  if (okStored === "ghp_goodtoken") pass("合法 token 被保存");
+  else fail("token 未保存", String(okStored));
+
   /* ---------- 9. 站点文案：防闪烁 ---------- */
   console.log("\n[9] 站点文案与应用");
   reset();

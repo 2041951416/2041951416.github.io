@@ -69,6 +69,20 @@
     if (status === 409 || (status === 422 && /fast forward/i.test(msg))) {
       return new Error("与他人改动冲突，正在重试…");
     }
+    if (status === 422) {
+      // 422 有几种完全不同的成因，别让用户对着英文原文猜
+      if (/Reference update failed|not a valid|object type/i.test(msg)) {
+        return new Error(
+          "GitHub 拒绝了这次写入（422 " + msg + "）。" +
+            "这个提示通常意味着 token 缺少 Contents 写权限 —— " +
+            "请确认权限里把 Contents 设成了 Read and write，而不是只读。"
+        );
+      }
+      return new Error(
+        "请求内容被 GitHub 拒绝（422 " + msg + "）。" +
+          "请把这条错误连同操作步骤反馈一次。"
+      );
+    }
     return new Error("GitHub 返回 " + status + "：" + msg);
   }
 
@@ -134,38 +148,28 @@
 
   /**
    * 验证 token 真的能写这个仓库，而不只是「有效」。
-   * 光 GET /user 通过不代表有 Contents 写权限，所以实际跑一遍
-   * blob → ref → 删 ref 的往返。
+   * 光 GET /user 通过不代表有 Contents 写权限，所以要实际写一次。
+   *
+   * 只建一个 blob 就够了：创建 blob 需要 Contents: write，和提交文件
+   * 是同一种权限。不要试图建临时分支来证明 —— refs/heads/* 只能指向
+   * commit，指向 blob 会被服务端以 422 "Reference update failed" 拒绝。
+   *
+   * 这个 blob 会成为游离对象，GitHub 会自行回收，不影响仓库。
    */
   function verifyToken(pat) {
     if (verifyInFlight) return verifyInFlight;
 
     verifyInFlight = req("GET", "/user", pat, null, "读取账号信息")
       .then(function (user) {
-        var base = repoPath();
-
-        // 建一个临时 blob，证明 Contents 写权限
-        return req("POST", base + "/git/blobs", pat, {
-          content: "probe " + Date.now(),
-          encoding: "utf-8",
-        }, "创建临时 blob")
-          .then(function (blob) {
-            // 建一个临时 ref 指向它，证明能写 refs
-            var refName = "refs/heads/editor-verify-" + Date.now();
-            return req("POST", base + "/git/refs", pat, {
-              ref: refName,
-              sha: blob.sha,
-            }, "创建临时分支")
-              .then(function () {
-                return req("DELETE", base + "/git/refs/heads/" + refName.split("/").pop(), pat, null, "清理临时分支")
-                  .catch(function () {
-                    return null; // 清理失败不应让验证失败
-                  })
-                  .then(function () {
-                    return { login: user.login, owner: cfg.owner, repo: cfg.repo };
-                  });
-              });
-          });
+        return req(
+          "POST",
+          repoPath() + "/git/blobs",
+          pat,
+          { content: "access probe " + Date.now(), encoding: "utf-8" },
+          "创建临时 blob"
+        ).then(function () {
+          return { login: user.login, owner: cfg.owner, repo: cfg.repo };
+        });
       })
       .then(function (out) {
         verifyInFlight = null;

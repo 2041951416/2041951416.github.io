@@ -190,7 +190,9 @@ D:\python311\python.exe tools\check.py
 ├── plan.html               学习计划 + 打卡
 ├── notes.html              知识点（卡片 + 全文搜索）
 ├── posts.html              随笔列表
-├── post.html               单篇阅读器（#slug 路由，带目录）
+├── post.html               单篇阅读器（?p=slug 路由，带目录）
+├── .github/workflows/
+│   └── pages.yml           部署流水线：推送 main 即自动发布
 ├── assets/
 │   ├── style.css           全部样式（设计 token 在 :root）
 │   ├── theme.js            深色模式，同步执行防闪屏
@@ -231,3 +233,5 @@ D:\python311\python.exe tools\check.py
 - **进度和路线分开存**：`plan.json` 在 git 里（版本化、可回溯），进度在 Gist/localStorage。混在一起会互相覆盖。
 - **合并用并集**：联网后 `本地 ∪ 远端`，所以任何一台设备的记录都不会被另一台覆盖掉。
 - **`.nojekyll`**：让 GitHub Pages 跳过 Jekyll 处理，避免下划线开头的文件出问题。
+- **为什么用 Actions 部署而不是分支发布**：分支发布（legacy）模式下，删掉的文件可能长期残留在发布产物里——曾经删除的 `cnc-app/` 就这样在线上存活了几个月，且源站已无该文件却仍返回 200。改用 Actions 后每次 push 都生成一份全新 artifact，删除立即生效。`upload-pages-artifact` 会自动排除 `.git` 和 `.github`。
+- **改完推送就行**：不再需要手动触发部署。`main` 分支一推，workflow 自动构建发布，约 30 秒。

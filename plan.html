@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习计划 · 黄兴抗</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Roadmap</div>
+      <h1>学习计划</h1>
+      <p class="lede">
+        从单片机基础到 PCB 布局布线，五条主线。勾选后自动记录完成日期，
+        并计入下方的打卡记录。
+      </p>
+    </section>
+
+    <div class="sync-bar" id="sync-bar"></div>
+
+    <section class="section">
+      <div class="section-head"><h2>总进度</h2></div>
+      <div id="overall" style="padding-top:1.2rem"></div>
+    </section>
+
+    <section class="section" style="margin-top:2.4rem">
+      <div class="section-head">
+        <h2>打卡记录</h2>
+        <span class="entry-date" id="heatmap-range"></span>
+      </div>
+      <div style="padding-top:1.4rem">
+        <div class="heatmap-wrap"><div class="heatmap" id="heatmap"></div></div>
+        <div class="heatmap-legend">
+          <span style="margin-inline-end:4px">少</span>
+          <i data-lv="0"></i><i data-lv="1"></i><i data-lv="2"></i><i data-lv="3"></i>
+          <span style="margin-inline-start:4px">多</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="margin-top:2.4rem">
+      <div class="section-head">
+        <h2>阶段与任务</h2>
+        <span class="more" id="plan-total"></span>
+      </div>
+      <div id="phases"></div>
+    </section>
+
+    <section class="section" style="margin-top:2.6rem">
+      <div class="section-head">
+        <h2>数据与同步</h2>
+        <span class="more" id="sync-state-text"></span>
+      </div>
+
+      <div class="sync-bar" id="sync-bar-2" style="margin-top:1.4rem"></div>
+
+      <div class="panel" id="setup-panel">
+        <h3>云同步设置</h3>
+        <p>
+          开启后，勾选记录会存到你私人 Gist，多台设备自动合并。不开启也能正常使用，
+          数据只存在当前浏览器。
+        </p>
+        <ol>
+          <li>GitHub → Settings → Developer settings → <strong>Personal access tokens → Tokens (classic)</strong></li>
+          <li>Generate new token (classic)，<strong>只勾选 <code>gist</code> 这一个 scope</strong></li>
+          <li>把生成的 token 粘贴到下面，点保存。首次保存会自动创建私有 Gist。</li>
+        </ol>
+        <p class="hint">
+          ⚠️ 不能用 fine-grained token —— GitHub 的细粒度 token 不支持 Gist。
+          token 存在本机 localStorage，只给 <code>gist</code> scope，动不了你的代码仓库。
+        </p>
+
+        <div class="field">
+          <label for="pat">Personal access token (classic)</label>
+          <input type="password" id="pat" autocomplete="off" spellcheck="false" placeholder="ghp_…">
+        </div>
+        <div class="field">
+          <label for="gist-id">Gist ID（留空则自动创建）</label>
+          <input type="text" id="gist-id" autocomplete="off" spellcheck="false" placeholder="自动">
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+          <button class="btn btn-accent" id="btn-save-pat" type="button">保存并连接</button>
+          <button class="btn" id="btn-test" type="button">测试连接</button>
+          <button class="btn" id="btn-clear-pat" type="button">清除 token</button>
+        </div>
+
+        <p class="hint" id="setup-msg" style="min-height:1.4em"></p>
+      </div>
+    </section>
+
+    <section class="section" id="about-plan" style="margin-top:2.6rem">
+      <div class="section-head"><h2>这份路线是怎么来的</h2></div>
+      <div style="padding-top:1.2rem">
+        <p class="lede" style="font-size:0.92rem">
+          不是抄的课程大纲。按「先能点亮一个 LED，再能画出第一块板」的顺序排的，
+          每一步都对应一件能独立验证的事。
+        </p>
+        <p class="lede" style="font-size:0.92rem">
+          任务是写在 <code>content/plan.json</code> 里的。想加、想删、想调整顺序直接改那个文件。
+          <strong>已经勾选过的任务不要改 id</strong>，否则进度会对不上。
+        </p>
+        <p style="font-size:0.88rem;color:var(--ink-3);margin-top:1.4rem">
+          <a href="index.html">← 回到概览</a>
+          <span style="margin:0 .7em;color:var(--hairline-strong)">|</span>
+          <a href="https://gist.github.com" target="_blank" rel="noopener">查看我的 Gist</a>
+        </p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>纯静态 · 无构建</span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+  var plan = null;
+  var expanded = {};
+
+  B.mountHeader("plan");
+  B.mountFooter();
+  B.installFlushHooks();
+
+  /* ---------- 同步状态条 ---------- */
+
+  function syncLabel() {
+    var s = B.getSyncStatus();
+    var map = {
+      off: ["", "未开启同步 — 数据保存在本设备"],
+      pending: ["warn", "已填 token，首次勾选时会创建 Gist"],
+      idle: ["", "准备就绪"],
+      busy: ["busy", "正在同步…"],
+      ok: ["ok", "已同步到 Gist"],
+      error: ["warn", "同步失败"],
+    };
+    var m = map[s.mode] || map.idle;
+    return { cls: m[0], text: m[1], detail: s.message };
+  }
+
+  function renderSyncBars() {
+    var info = syncLabel();
+    var html =
+      '<span><i class="sync-dot ' + info.cls + '"></i>' + B.esc(info.text) + "</span>" +
+      '<span class="actions">';
+    if (!B.isSyncEnabled()) {
+      html += '<button type="button" data-act="setup">设置同步</button>';
+    } else {
+      html += '<button type="button" data-act="push">立即同步</button>';
+    }
+    html += '<button type="button" data-act="export">导出 JSON</button>' +
+      '<label class="file" for="import-file">导入 JSON</label>' +
+      "</span>";
+
+    ["sync-bar", "sync-bar-2"].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n) n.innerHTML = html;
+    });
+
+    var st = document.getElementById("sync-state-text");
+    if (st) st.textContent = info.detail || "";
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    var act = btn.dataset.act;
+    if (act === "setup") {
+      document.getElementById("setup-panel").scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("pat").focus();
+    } else if (act === "export") {
+      B.exportState();
+    } else if (act === "push") {
+      B.flushSave();
+    }
+  });
+
+  /* 导入 */
+  var fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "application/json,.json";
+  fileInput.style.display = "none";
+  fileInput.id = "import-file";
+  document.body.appendChild(fileInput);
+
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "import-file" && e.target.files[0]) {
+      B.importState(e.target.files[0])
+        .then(function () {
+          msg("已导入并合并。", false);
+          render();
+        })
+        .catch(function (err) {
+          msg(err.message, true);
+        });
+      e.target.value = "";
+    }
+  });
+
+  /* ---------- 总进度 ---------- */
+
+  function renderOverall() {
+    var state = B.getState();
+    var done = state.done || {};
+    var ov = B.overallProgress(plan, done);
+    var host = document.getElementById("overall");
+
+    var phasesDone = (plan.phases || []).filter(function (ph) {
+      var p = B.phaseProgress(ph, done);
+      return p.total > 0 && p.done === p.total;
+    }).length;
+
+    host.innerHTML =
+      '<div class="bar bar-lg"><i style="width:' + ov.pct + '%"></i></div>' +
+      '<div class="bar-meta">' +
+      "<span>已完成 " + ov.done + " / " + ov.total + " 项任务</span>" +
+      "<span>" + phaseDoneText(phasesDone) + "</span>" +
+      "</div>";
+
+    var pt = document.getElementById("plan-total");
+    if (pt) pt.textContent = Math.round(ov.pct) + "%";
+  }
+
+  function phaseDoneText(n) {
+    var total = (plan.phases || []).length;
+    return n === total && total > 0 ? "全部阶段完成" : n + " / " + total + " 个阶段完成";
+  }
+
+  /* ---------- 热力图 ---------- */
+
+  function renderHeatmap() {
+    var state = B.getState();
+    var counts = B.countsFromDone(state.done || {});
+    var today = B.today();
+    var start = B.addDays(today, -181); // 约半年
+
+    var cells = B.calendarCells(start, today, counts);
+    var host = document.getElementById("heatmap");
+    var html = "";
+    cells.forEach(function (c) {
+      if (c.date) {
+        html +=
+          '<i data-lv="' + c.level + '" title="' +
+          B.esc(c.date) + " · " + c.count + " 项" + '"></i>';
+      } else {
+        html += '<i style="background:transparent"></i>';
+      }
+    });
+    host.innerHTML = html;
+
+    var rng = document.getElementById("heatmap-range");
+    if (rng) rng.textContent = B.fmtDate(start) + " — 今天";
+  }
+
+  /* ---------- 阶段与任务 ---------- */
+
+  function renderPhases() {
+    var state = B.getState();
+    var done = state.done || {};
+    var host = document.getElementById("phases");
+    host.innerHTML = "";
+
+    (plan.phases || []).forEach(function (ph, i) {
+      var p = B.phaseProgress(ph, done);
+      var isOpen = expanded[ph.id] !== undefined ? expanded[ph.id] : p.done < p.total;
+
+      var wrap = document.createElement("div");
+      wrap.className = "phase";
+      wrap.id = ph.id;
+
+      var head = document.createElement("button");
+      head.className = "phase-head";
+      head.type = "button";
+      head.setAttribute("aria-expanded", String(isOpen));
+      head.setAttribute("aria-controls", ph.id + "-body");
+      head.innerHTML =
+        '<span class="chev">▶</span>' +
+        '<span class="phase-idx">' + String(i + 1).padStart(2, "0") + "</span>" +
+        '<span class="phase-title">' + B.esc(ph.title) + "</span>" +
+        '<span class="phase-count' + (p.done === p.total && p.total ? " done" : "") + '">' +
+        p.done + " / " + p.total + "</span>";
+
+      var body = document.createElement("div");
+      body.className = "phase-body";
+      body.id = ph.id + "-body";
+      if (!isOpen) body.hidden = true;
+
+      var bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.marginBlockEnd = "12px";
+      bar.innerHTML = '<i style="width:' + p.pct + '%"></i>';
+      body.appendChild(bar);
+
+      (ph.tasks || []).forEach(function (t) {
+        var isDone = done[t.id] !== undefined;
+        var row = document.createElement("div");
+        row.className = "task" + (isDone ? " is-done" : "");
+
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = isDone;
+        cb.id = "cb-" + t.id;
+        cb.addEventListener("change", function () {
+          B.setTaskDone(t.id, cb.checked);
+        });
+
+        var label = document.createElement("label");
+        label.htmlFor = "cb-" + t.id;
+        label.textContent = t.title;
+
+        row.appendChild(cb);
+        row.appendChild(label);
+
+        if (t.ref) {
+          var ref = document.createElement("a");
+          ref.className = "task-ref";
+          ref.href = "post.html?p=" + t.ref;
+          ref.textContent = "→";
+          ref.title = "查看相关知识点";
+          row.appendChild(ref);
+        }
+
+        var date = document.createElement("span");
+        date.className = "task-date";
+        date.textContent = isDone && done[t.id] ? B.fmtDate(done[t.id]) : "";
+        row.appendChild(date);
+
+        if (isDone) {
+          var reset = document.createElement("button");
+          reset.className = "task-reset";
+          reset.type = "button";
+          reset.title = "取消完成";
+          reset.textContent = "✕";
+          reset.addEventListener("click", function () {
+            B.setTaskDone(t.id, false);
+          });
+          row.appendChild(reset);
+        }
+
+        body.appendChild(row);
+      });
+
+      head.addEventListener("click", function () {
+        var open = head.getAttribute("aria-expanded") === "true";
+        head.setAttribute("aria-expanded", String(!open));
+        body.hidden = open;
+        expanded[ph.id] = !open;
+      });
+
+      wrap.appendChild(head);
+      wrap.appendChild(body);
+      host.appendChild(wrap);
+    });
+  }
+
+  /* ---------- 渲染总控 ---------- */
+
+  function render() {
+    renderOverall();
+    renderHeatmap();
+    renderPhases();
+    renderSyncBars();
+  }
+
+  B.subscribe(function () {
+    if (plan) render();
+  });
+
+  /* ---------- 设置面板 ---------- */
+
+  function msg(text, isErr) {
+    var n = document.getElementById("setup-msg");
+    if (!n) return;
+    n.textContent = text || "";
+    n.style.color = isErr ? "#c9553d" : "var(--accent)";
+  }
+
+  function initSetup() {
+    var pat = document.getElementById("pat");
+    var gid = document.getElementById("gist-id");
+    pat.value = B.getPat();
+    gid.value = B.getGistId();
+
+    document.getElementById("btn-save-pat").addEventListener("click", function () {
+      var v = pat.value.trim();
+      B.setPat(v);
+      B.setGistId(gid.value.trim());
+      if (!v) {
+        msg("已清除 token，数据只保存在本设备。", false);
+        renderSyncBars();
+        return;
+      }
+      msg("正在连接…", false);
+      B.pullRemote()
+        .then(function () {
+          var s = B.getSyncStatus();
+          if (s.mode === "error") {
+            msg(s.message, true);
+          } else {
+            msg("已连接。勾选任务后会自动同步。", false);
+          }
+          render();
+        })
+        .catch(function (e) {
+          msg(e.message, true);
+        });
+    });
+
+    document.getElementById("btn-test").addEventListener("click", function () {
+      var v = pat.value.trim();
+      if (!v) {
+        msg("请先填写 token。", true);
+        return;
+      }
+      msg("测试中…", false);
+      fetch("https://api.github.com/user", {
+        headers: { Authorization: "Bearer " + v, Accept: "application/vnd.github+json" },
+      })
+        .then(function (r) {
+          if (r.status === 401) throw new Error("Token 无效（401）。请重新生成。");
+          return r.json().then(function (b) {
+            msg("连接成功，账号：" + b.login + "。注意：还需确认 token 勾选了 gist scope。", false);
+          });
+        })
+        .catch(function (e) {
+          msg(e.message, true);
+        });
+    });
+
+    document.getElementById("btn-clear-pat").addEventListener("click", function () {
+      B.setPat("");
+      B.setGistId("");
+      pat.value = "";
+      gid.value = "";
+      msg("已清除 token 与 Gist ID。本地勾选记录保留。", false);
+      renderSyncBars();
+    });
+  }
+
+  /* ---------- 启动 ---------- */
+
+  B.loadPlan()
+    .then(function (p) {
+      plan = p;
+      initSetup();
+      render();
+      // 支持 plan.html#p3 直接定位
+      if (location.hash) {
+        var target = document.getElementById(location.hash.slice(1));
+        if (target && target.classList.contains("phase")) {
+          var h = target.querySelector(".phase-head");
+          if (h && h.getAttribute("aria-expanded") !== "true") h.click();
+          setTimeout(function () {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 60);
+        }
+      }
+      return B.pullRemote();
+    })
+    .then(function () {
+      render();
+    })
+    .catch(function (e) {
+      console.error(e);
+      document.getElementById("phases").innerHTML =
+        '<p class="empty">加载失败：' + B.esc(e.message) + "</p>";
+    });
+})();
+</script>
+</body>
+</html>

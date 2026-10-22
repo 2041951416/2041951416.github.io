@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识点 · 黄兴抗</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Notes</div>
+      <h1>知识点</h1>
+      <p class="lede">
+        一个概念想明白了就写一页。标准是「未来的自己能直接看懂」，不是写给别人的教程。
+      </p>
+    </section>
+
+    <input class="search" id="q" type="search" placeholder="搜索标题、标签或正文…" autocomplete="off">
+    <div class="search-meta" id="meta"></div>
+
+    <div class="cards" id="cards"></div>
+    <div class="empty" id="empty" hidden>
+      <p>没有匹配的知识点。</p>
+      <p style="font-size:0.82em">换个关键词试试，或者按 <code>Esc</code> 清空。</p>
+    </div>
+
+    <hr class="rule">
+    <p style="font-size:0.86rem;color:var(--ink-3)">
+      新增一条：在 <code>content/notes/</code> 放一个 <code>.md</code>，
+      再到 <code>content/index.json</code> 的 <code>notes</code> 数组里登记一行。
+    </p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>纯静态 · 无构建</span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+  var notes = [];   // { slug, title, tags, summary, date, body }
+  var filtered = [];
+
+  B.mountHeader("notes");
+  B.mountFooter();
+
+  function renderCards(list, q) {
+    var host = document.getElementById("cards");
+    var empty = document.getElementById("empty");
+    var meta = document.getElementById("meta");
+    host.innerHTML = "";
+
+    meta.textContent = q
+      ? "「" + q + "」匹配到 " + list.length + " 条"
+      : "共 " + notes.length + " 条";
+
+    if (!list.length) {
+      host.hidden = true;
+      empty.hidden = false;
+      if (notes.length === 0) {
+        empty.innerHTML =
+          "<p>还没有知识点。</p><p style='font-size:0.82em'>" +
+          "在 <code>content/notes/</code> 新建一个 <code>.md</code>，" +
+          "再在 <code>content/index.json</code> 登记。</p>";
+      } else {
+        empty.innerHTML =
+          "<p>没有匹配的知识点。</p><p style='font-size:0.82em'>换个关键词，或按 <code>Esc</code> 清空。</p>";
+      }
+      return;
+    }
+
+    host.hidden = false;
+    empty.hidden = true;
+
+    list.forEach(function (n) {
+      var a = document.createElement("a");
+      a.className = "card";
+      a.href = "post.html?p=" + n.slug;
+
+      var h = document.createElement("h3");
+      h.innerHTML = B.highlight(n.title, q);
+      a.appendChild(h);
+
+      var sum = document.createElement("p");
+      sum.innerHTML = B.highlight(n.summary || "", q);
+      a.appendChild(sum);
+
+      if (n.tags && n.tags.length) {
+        var tags = document.createElement("div");
+        tags.className = "tags";
+        n.tags.forEach(function (t) {
+          var s = document.createElement("span");
+          s.className = "tag";
+          s.innerHTML = B.highlight(t, q);
+          tags.appendChild(s);
+        });
+        a.appendChild(tags);
+      }
+
+      host.appendChild(a);
+    });
+  }
+
+  function normalize(s) {
+    return String(s || "").toLowerCase();
+  }
+
+  function search(q) {
+    var term = normalize(q).trim();
+    if (!term) return notes.slice();
+
+    var parts = term.split(/\s+/).filter(Boolean);
+    return notes.filter(function (n) {
+      var hay = normalize(
+        (n.title || "") + " " + (n.tags || []).join(" ") + " " + (n.summary || "") + " " + (n.body || "")
+      );
+      return parts.every(function (p) {
+        return hay.indexOf(p) >= 0;
+      });
+    });
+  }
+
+  var doSearch = B.debounce(function (q) {
+    filtered = search(q);
+    renderCards(filtered, q.trim());
+  }, 150);
+
+  function boot() {
+    B.getJson("content/index.json")
+      .then(function (manifest) {
+        var list = manifest.notes || [];
+        if (!list.length) {
+          renderCards([], "");
+          return [];
+        }
+        // 并发预加载所有笔记正文，用于全文搜索
+        return Promise.all(
+          list.map(function (n) {
+            return B.getText("content/notes/" + n.slug + ".md")
+              .then(function (raw) {
+                var parts = B.splitFrontMatter(raw);
+                return {
+                  slug: n.slug,
+                  title: n.title || parts.meta.title || n.slug,
+                  tags: n.tags || parts.meta.tags || [],
+                  summary: n.summary || parts.meta.summary || "",
+                  date: n.date || parts.meta.date || "",
+                  body: parts.body,
+                };
+              })
+              .catch(function () {
+                // 正文取不到时仍展示卡片信息
+                return {
+                  slug: n.slug,
+                  title: n.title || n.slug,
+                  tags: n.tags || [],
+                  summary: n.summary || "",
+                  date: n.date || "",
+                  body: "",
+                };
+              });
+          })
+        );
+      })
+      .then(function (all) {
+        notes = all.sort(function (a, b) {
+          return (b.date || "").localeCompare(a.date || "");
+        });
+        filtered = notes.slice();
+        renderCards(filtered, "");
+      })
+      .catch(function (e) {
+        console.error(e);
+        document.getElementById("meta").textContent = "加载失败：" + e.message;
+      });
+  }
+
+  var qInput = document.getElementById("q");
+  qInput.addEventListener("input", function () {
+    doSearch(qInput.value);
+  });
+  qInput.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      qInput.value = "";
+      doSearch("");
+    }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>

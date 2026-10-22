@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>随笔 · 黄兴抗</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Posts</div>
+      <h1>随笔</h1>
+      <p class="lede">
+        项目复盘、阶段总结、想不通的问题。比知识点长，也更乱——那是思考真实的样子。
+      </p>
+    </section>
+
+    <ul class="entries" id="list"></ul>
+    <div class="empty" id="empty" hidden>
+      <p>还没有随笔。</p>
+      <p style="font-size:0.82em">
+        在 <code>content/posts/</code> 新建一个 <code>.md</code>，
+        再在 <code>content/index.json</code> 登记。
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>纯静态 · 无构建</span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+  B.mountHeader("posts");
+  B.mountFooter();
+
+  B.getJson("content/index.json")
+    .then(function (manifest) {
+      var posts = (manifest.posts || []).slice().sort(function (a, b) {
+        return (b.date || "").localeCompare(a.date || "");
+      });
+
+      if (!posts.length) {
+        document.getElementById("empty").hidden = false;
+        return;
+      }
+
+      var host = document.getElementById("list");
+      posts.forEach(function (p) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.className = "entry";
+        a.href = "post.html?p=" + p.slug;
+
+        var tagHtml = (p.tags || [])
+          .map(function (t) {
+            return '<span class="tag">' + B.esc(t) + "</span>";
+          })
+          .join("");
+
+        a.innerHTML =
+          '<div class="entry-row">' +
+          '<div>' +
+          '<div class="entry-title">' + B.esc(p.title) + "</div>" +
+          '<div class="entry-sub" style="margin-top:3px">' + B.esc(p.summary || "") + "</div>" +
+          (tagHtml ? '<div class="tags">' + tagHtml + "</div>" : "") +
+          "</div>" +
+          '<span class="entry-date">' + B.esc(p.date || "") + "</span>" +
+          "</div>";
+
+        li.appendChild(a);
+        host.appendChild(li);
+      });
+    })
+    .catch(function (e) {
+      console.error(e);
+      document.getElementById("empty").hidden = false;
+      document.getElementById("empty").innerHTML =
+        '<p>加载失败：' + B.esc(e.message) + "</p>";
+    });
+})();
+</script>
+</body>
+</html>

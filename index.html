@@ -1,511 +1,264 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黄兴抗 - 个人主页</title>
-    <style>
-        /* Reset & Base */
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            color: #1a1a2e;
-            background: #f8f9fa;
-            line-height: 1.7;
-        }
-        a { text-decoration: none; color: inherit; }
-
-        /* Hero */
-        .hero {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: #fff;
-            padding: 80px 20px 60px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::after {
-            content: '';
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(233,69,96,0.15) 0%, transparent 70%);
-            top: -100px;
-            right: -100px;
-            border-radius: 50%;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(83,144,217,0.12) 0%, transparent 70%);
-            bottom: -50px;
-            left: -50px;
-            border-radius: 50%;
-        }
-        .hero-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #e94560, #0f3460);
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            font-weight: 700;
-            border: 3px solid rgba(255,255,255,0.3);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 1;
-        }
-        .hero h1 {
-            font-size: 2.4em;
-            font-weight: 700;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-        }
-        .hero p {
-            font-size: 1.1em;
-            opacity: 0.85;
-            max-width: 500px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-        .hero-tags {
-            margin-top: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            position: relative;
-            z-index: 1;
-        }
-        .hero-tags span {
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(4px);
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-
-        /* Container */
-        .container {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Sections */
-        section {
-            padding: 60px 0;
-        }
-        section:nth-child(even) { background: #fff; }
-
-        .section-title {
-            font-size: 1.6em;
-            font-weight: 700;
-            margin-bottom: 32px;
-            position: relative;
-            padding-bottom: 12px;
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: #e94560;
-            border-radius: 2px;
-        }
-
-        /* About grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 16px;
-        }
-        .info-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 16px 20px;
-            border: 1px solid #eee;
-        }
-        .info-card .label {
-            font-size: 0.8em;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-        .info-card .value {
-            font-size: 1em;
-            font-weight: 600;
-        }
-
-        /* Skills */
-        .skills-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .skill-tag {
-            background: #e94560;
-            color: #fff;
-            padding: 6px 20px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-        .skill-tag.soft {
-            background: #0f3460;
-        }
-        .skill-tag.tool {
-            background: #16213e;
-        }
-        .skill-tag.ai {
-            background: #1a8a5c;
-        }
-
-        /* Timeline for projects */
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e0e0e0;
-        }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 32px;
-            padding-left: 20px;
-        }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -26px;
-            top: 6px;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #e94560;
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 2px #e94560;
-        }
-        .timeline-date {
-            font-size: 0.85em;
-            color: #e94560;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .timeline-title {
-            font-size: 1.15em;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .timeline-desc {
-            color: #555;
-            font-size: 0.93em;
-            line-height: 1.7;
-        }
-
-        /* Education */
-        .edu-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #eee;
-        }
-        .edu-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #e94560, #0f3460);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1.3em;
-            flex-shrink: 0;
-        }
-        .edu-info h3 {
-            font-size: 1.1em;
-            margin-bottom: 4px;
-        }
-        .edu-info p {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        /* Self evaluation */
-        .eval-box {
-            background: linear-gradient(135deg, #f8f9fa, #fff);
-            border-left: 4px solid #e94560;
-            padding: 20px 24px;
-            border-radius: 0 10px 10px 0;
-            line-height: 1.8;
-            color: #444;
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 30px 20px;
-            color: #888;
-            font-size: 0.85em;
-            border-top: 1px solid #eee;
-        }
-        footer a { color: #e94560; font-weight: 500; }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 1.8em; }
-            .info-grid { grid-template-columns: 1fr; }
-            section { padding: 40px 0; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>黄兴抗 · 嵌入式 & PCB 学习日志</title>
+<meta name="description" content="嵌入式与 PCB 的学习计划、知识点笔记与随笔。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
 </head>
 <body>
 
-<!-- ========== HERO ========== -->
-<section class="hero">
-    <div class="hero-avatar">黄</div>
-    <h1>黄兴抗</h1>
-    <p>电子信息工程 · 热爱 AI 与开源 · 持续学习者</p>
-    <div class="hero-tags">
-        <span>南昌师范学院</span>
-        <span>电子信息工程</span>
-        <span>Java / Python</span>
-        <span>AI 学习者</span>
-        <span>开源贡献者</span>
-    </div>
-</section>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
 
-<!-- ========== ABOUT ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">个人信息</h2>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="label">姓名</div>
-                <div class="value">黄兴抗</div>
-            </div>
-            <div class="info-card">
-                <div class="label">出生年月</div>
-                <div class="value">2001.12</div>
-            </div>
-            <div class="info-card">
-                <div class="label">毕业院校</div>
-                <div class="value">南昌师范学院</div>
-            </div>
-            <div class="info-card">
-                <div class="label">专&nbsp;&nbsp;业</div>
-                <div class="value">电子信息工程</div>
-            </div>
-            <div class="info-card">
-                <div class="label">毕业时间</div>
-                <div class="value">2026.6</div>
-            </div>
-            <div class="info-card">
-                <div class="label">政治面貌</div>
-                <div class="value">共青团员</div>
-            </div>
-            <div class="info-card">
-                <div class="label">电&nbsp;&nbsp;话</div>
-                <div class="value">19534991203</div>
-            </div>
-            <div class="info-card">
-                <div class="label">邮&nbsp;&nbsp;箱</div>
-                <div class="value">2041951416@qq.com</div>
-            </div>
-            <div class="info-card">
-                <div class="label">地&nbsp;&nbsp;址</div>
-                <div class="value">江西省赣州市</div>
-            </div>
-        </div>
-    </div>
-</section>
+<main>
+  <div class="wrap">
 
-<!-- ========== SKILLS ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">专业技能</h2>
-        <div class="skills-list">
-            <span class="skill-tag">Java</span>
-            <span class="skill-tag">Python</span>
-            <span class="skill-tag">SSM Framework</span>
-            <span class="skill-tag">MySQL</span>
-            <span class="skill-tag tool">Spring Boot</span>
-            <span class="skill-tag soft">文档优化</span>
-            <span class="skill-tag soft">办公软件</span>
-            <span class="skill-tag ai">AI 辅助开发</span>
-            <span class="skill-tag ai">单片机/嵌入式</span>
-        </div>
-    </div>
-</section>
+    <section class="hero">
+      <div class="eyebrow">Study Log</div>
+      <h1>把「我要学嵌入式」<br>拆成能打勾的条目</h1>
+      <p class="lede">
+        这里记录学习计划的推进、知识点的理解，以及项目复盘。
+        写给自己看，顺带留个存档。
+      </p>
+    </section>
 
-<!-- ========== SHOWCASE ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">作品展示</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;">
-            <a href="pixi-demo/" target="_blank" style="display:block;border-radius:12px;overflow:hidden;border:1px solid #eee;transition:all 0.3s;background:#fff;">
-                <div style="height:180px;background:linear-gradient(135deg,#0a0a1a,#16213e,#0f3460);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                    <div style="position:absolute;width:60px;height:60px;border-radius:50%;background:rgba(233,69,96,0.2);top:20px;right:20px;"></div>
-                    <div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(83,216,251,0.15);bottom:30px;left:30px;"></div>
-                    <div style="color:#fff;font-size:20px;font-weight:700;letter-spacing:2px;z-index:1;">🎮 PixiJS 交互展示</div>
-                </div>
-                <div style="padding:16px 20px;">
-                    <div style="font-weight:600;margin-bottom:4px;">PixiJS 动态粒子系统</div>
-                    <div style="font-size:0.85em;color:#888;line-height:1.6;">
-                        基于 PixiJS v8 构建的交互式 2D 粒子动画，包含粒子系统、位移动画、鼠标交互响应。
-                    </div>
-                    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
-                        <span style="font-size:0.75em;background:#e94560;color:#fff;padding:2px 10px;border-radius:10px;">PixiJS</span>
-                        <span style="font-size:0.75em;background:#16213e;color:#fff;padding:2px 10px;border-radius:10px;">Canvas</span>
-                        <span style="font-size:0.75em;background:#1a8a5c;color:#fff;padding:2px 10px;border-radius:10px;">WebGL</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
-</section>
+    <section class="stats" id="stats" aria-label="总览统计">
+      <div class="stat">
+        <div class="k">总体进度</div>
+        <div class="v" id="stat-total">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">本周完成</div>
+        <div class="v" id="stat-week">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">连续打卡</div>
+        <div class="v" id="stat-streak">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">笔记 / 随笔</div>
+        <div class="v" id="stat-count">—</div>
+      </div>
+    </section>
 
-<!-- ========== PROJECTS ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">项目经历</h2>
-        <div class="timeline">
+    <section class="section" id="sec-plan">
+      <div class="section-head">
+        <h2>当前阶段</h2>
+        <a class="more" href="plan.html">完整计划 →</a>
+      </div>
+      <div id="plan-summary"></div>
+    </section>
 
-            <div class="timeline-item">
-                <div class="timeline-date">2025.7 — 2025.9</div>
-                <div class="timeline-title">基于单片机的智能烘干机收割机 <span style="font-size:0.8em;color:#e94560;font-weight:400;">（毕业设计）</span></div>
-                <div class="timeline-desc">
-                    基于单片机设计智能烘干与收割控制系统，整合传感器数据采集与自动控制逻辑，
-                    实现对农作物烘干过程的温度、湿度智能调控及收割机构的自动化控制。
-                </div>
-            </div>
+    <section class="section" id="sec-notes" style="margin-top:2.6rem">
+      <div class="section-head">
+        <h2>最近的知识点</h2>
+        <a class="more" href="notes.html">全部知识点 →</a>
+      </div>
+      <ul class="entries" id="recent-notes"></ul>
+    </section>
 
-            <div class="timeline-item">
-                <div class="timeline-date">2024.7 — 2024.10</div>
-                <div class="timeline-title">开源之夏 · Koupleless 应用自动拆分模块</div>
-                <div class="timeline-desc">
-                    成功入选开源之夏（OSPP）Koupleless 项目，独立负责"应用自动拆分模块"开发。
-                    在蚂蚁集团 Koupleless 框架下开发 Spring-Boot 应用自动模块化拆分工具，
-                    包含依赖分析、代码拆分等 3 个核心模块，完成开发并获项目证书及奖金。
-                    项目后进行社区技术分享并撰写使用文档。
-                </div>
-            </div>
+    <section class="section" id="sec-posts" style="margin-top:2.6rem">
+      <div class="section-head">
+        <h2>最近的随笔</h2>
+        <a class="more" href="posts.html">全部随笔 →</a>
+      </div>
+      <ul class="entries" id="recent-posts"></ul>
+    </section>
 
-            <div class="timeline-item">
-                <div class="timeline-date">2024.3 — 2024.6</div>
-                <div class="timeline-title">Koupleless 开源社区贡献</div>
-                <div class="timeline-desc">
-                    参与蚂蚁集团开源项目 Koupleless 社区建设，累计关闭 Issue 21 个，
-                    PR 合并率 100%。在社区中积极反馈问题、提交代码修复与功能改进。
-                </div>
-            </div>
+    <hr class="rule">
 
-        </div>
-    </div>
-</section>
+    <section class="section">
+      <div class="section-head"><h2>关于</h2></div>
+      <div style="padding-top:1.2rem">
+        <p class="lede" style="font-size:0.92rem">
+          电子信息工程，即将毕业。做过的项目集中在单片机和 PCB 方向，
+          也在开源社区参与过一些 Spring 相关的工作。
+        </p>
+        <p class="lede" style="font-size:0.92rem">
+          这个站点是纯静态页面，没有构建步骤。想加内容就写一个 Markdown 文件，
+          在清单里登记一行。
+        </p>
+        <p style="font-size:0.88rem;color:var(--ink-3);margin-top:1.4rem">
+          <a href="https://github.com/2041951416" target="_blank" rel="noopener">GitHub</a>
+          <span style="margin:0 .7em;color:var(--hairline-strong)">|</span>
+          <a href="plan.html">学习计划</a>
+          <span style="margin:0 .7em;color:var(--hairline-strong)">|</span>
+          <a href="notes.html">知识点</a>
+        </p>
+      </div>
+    </section>
 
-<!-- ========== CAMPUS ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">校园经历</h2>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="label">职务</div>
-                <div class="value">组织委员</div>
-                <div style="font-size:0.85em;color:#888;margin-top:4px;">组织班级日常事务及文体活动</div>
-            </div>
-            <div class="info-card">
-                <div class="label">荣誉</div>
-                <div class="value">校级奖学金</div>
-                <div style="font-size:0.85em;color:#888;margin-top:4px;">成绩优异，综合素质突出</div>
-            </div>
-            <div class="info-card">
-                <div class="label">兴趣</div>
-                <div class="value">AI 学习探索</div>
-                <div style="font-size:0.85em;color:#888;margin-top:4px;">善于用 AI 工具提升学习与开发效率</div>
-            </div>
-        </div>
-    </div>
-</section>
+  </div>
+</main>
 
-<!-- ========== EDUCATION ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">教育背景</h2>
-        <div class="edu-item">
-            <div class="edu-icon">🎓</div>
-            <div class="edu-info">
-                <h3>南昌师范学院</h3>
-                <p>电子信息工程 · 本科 · 2022 — 2026</p>
-                <p style="margin-top:6px;color:#888;font-size:0.85em;">
-                    主修课程：单片机原理、嵌入式系统、C/Java/Python 编程、数据库原理
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ========== SELF EVAL ========== -->
-<section>
-    <div class="container">
-        <h2 class="section-title">自我评价</h2>
-        <div class="eval-box">
-            工作认真负责，细致谨慎，善于在工作中发现问题、分析问题并解决问题。<br>
-            具备较强的学习能力和自驱力，勤奋好学、踏实肯干，热爱迎接新的挑战。<br>
-            为人谦虚友好，做事细心，有较强的责任心和团队协作精神，<br>
-            具备良好的沟通能力和抗压能力。
-        </div>
-    </div>
-</section>
-
-<!-- ========== CONTACT ========== -->
-<section>
-    <div class="container" style="text-align:center;">
-        <h2 class="section-title" style="text-align:left;">联系我</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-top:20px;">
-            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
-                <div style="font-size:0.8em;color:#888;">邮箱</div>
-                <div style="font-weight:600;">2041951416@qq.com</div>
-            </div>
-            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
-                <div style="font-size:0.8em;color:#888;">电话</div>
-                <div style="font-weight:600;">19534991203</div>
-            </div>
-            <div style="background:#f8f9fa;padding:16px 28px;border-radius:10px;border:1px solid #eee;min-width:200px;">
-                <div style="font-size:0.8em;color:#888;">GitHub</div>
-                <div style="font-weight:600;">
-                    <a href="https://github.com/2041951416" target="_blank" style="color:#e94560;">2041951416</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<footer>
-    © 2026 黄兴抗 · Built with ❤️
-    <br><span style="font-size:0.8em;opacity:0.7;">Powered by GitHub Pages</span>
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span>纯静态 · 无构建</span>
+  </div>
 </footer>
 
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+
+  B.mountHeader("index");
+  B.mountFooter();
+  B.installFlushHooks();
+
+  function renderStats(plan, manifest, state) {
+    var done = state.done || {};
+    var ov = B.overallProgress(plan, done);
+
+    var total = document.getElementById("stat-total");
+    total.innerHTML = ov.done + '<small>/' + ov.total + '</small>';
+
+    var wk = document.getElementById("stat-week");
+    var wkDone = 0;
+    var d = B.today();
+    for (var i = 0; i < 7; i++) {
+      var counts = B.countsFromDone(done);
+      wkDone += counts[d] || 0;
+      d = B.addDays(d, -1);
+    }
+    wk.innerHTML = wkDone + '<small>项</small>';
+
+    var st = document.getElementById("stat-streak");
+    var s = B.streak(state.checkins || {});
+    st.innerHTML = s + '<small>天</small>';
+
+    var cnt = document.getElementById("stat-count");
+    var nNotes = (manifest.notes || []).length;
+    var nPosts = (manifest.posts || []).length;
+    cnt.innerHTML = nNotes + '<small>/' + nPosts + '</small>';
+  }
+
+  function renderPlanSummary(plan, state) {
+    var host = document.getElementById("plan-summary");
+    host.innerHTML = "";
+    var done = state.done || {};
+    var ov = B.overallProgress(plan, done);
+
+    var bar = document.createElement("div");
+    bar.innerHTML =
+      '<div class="bar bar-lg"><i style="width:' + ov.pct + '%"></i></div>' +
+      '<div class="bar-meta"><span>已完成 ' + ov.done + ' / ' + ov.total + ' 项</span>' +
+      "<span>" + Math.round(ov.pct) + "%</span></div>";
+    host.appendChild(bar);
+
+    // 每个阶段一行
+    var list = document.createElement("ul");
+    list.className = "entries";
+    list.style.marginTop = "1.2rem";
+
+    (plan.phases || []).forEach(function (ph) {
+      var p = B.phaseProgress(ph, done);
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "entry";
+      a.href = "plan.html#" + ph.id;
+      a.innerHTML =
+        '<div class="entry-row">' +
+        '<span class="entry-title">' + B.esc(ph.title) + "</span>" +
+        '<span class="entry-date">' + p.done + " / " + p.total + "</span>" +
+        "</div>" +
+        '<div class="bar" style="margin-top:8px"><i style="width:' + p.pct + '%"></i></div>';
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+    host.appendChild(list);
+  }
+
+  function renderRecentNotes(manifest) {
+    var host = document.getElementById("recent-notes");
+    host.innerHTML = "";
+    var notes = (manifest.notes || []).slice().sort(function (a, b) {
+      return (b.date || "").localeCompare(a.date || "");
+    }).slice(0, 3);
+
+    if (!notes.length) {
+      host.innerHTML = '<li><div class="entry"><span class="entry-sub">还没有知识点。见 README。</span></div></li>';
+      return;
+    }
+
+    notes.forEach(function (n) {
+      var li = document.createElement("li");
+      li.innerHTML =
+        '<a class="entry" href="post.html?p=' + B.esc(n.slug) + '">' +
+        '<div class="entry-title">' + B.esc(n.title) + "</div>" +
+        '<div class="entry-row" style="margin-top:3px">' +
+        '<span class="entry-sub">' + B.esc(n.summary || "") + "</span>" +
+        '<span class="entry-date">' + B.esc(n.date || "") + "</span>" +
+        "</div></a>";
+      host.appendChild(li);
+    });
+  }
+
+  function renderRecentPosts(manifest) {
+    var host = document.getElementById("recent-posts");
+    host.innerHTML = "";
+    var posts = (manifest.posts || []).slice().sort(function (a, b) {
+      return (b.date || "").localeCompare(a.date || "");
+    }).slice(0, 3);
+
+    if (!posts.length) {
+      host.innerHTML = '<li><div class="entry"><span class="entry-sub">还没有随笔。见 README。</span></div></li>';
+      return;
+    }
+
+    posts.forEach(function (p) {
+      var li = document.createElement("li");
+      li.innerHTML =
+        '<a class="entry" href="post.html?p=' + B.esc(p.slug) + '">' +
+        '<div class="entry-title">' + B.esc(p.title) + "</div>" +
+        '<div class="entry-row" style="margin-top:3px">' +
+        '<span class="entry-sub">' + B.esc(p.summary || "") + "</span>" +
+        '<span class="entry-date">' + B.esc(p.date || "") + "</span>" +
+        "</div></a>";
+      host.appendChild(li);
+    });
+  }
+
+  Promise.all([
+    B.loadPlan(),
+    B.getJson("content/index.json").catch(function () {
+      return { posts: [], notes: [] };
+    }),
+    B.pullRemote().catch(function () {
+      return B.getState();
+    }),
+  ])
+    .then(function (res) {
+      var plan = res[0];
+      var manifest = res[1] || { posts: [], notes: [] };
+      var state = B.getState();
+
+      renderStats(plan, manifest, state);
+      renderPlanSummary(plan, state);
+      renderRecentNotes(manifest);
+      renderRecentPosts(manifest);
+    })
+    .catch(function (e) {
+      console.error(e);
+      document.getElementById("plan-summary").innerHTML =
+        '<p class="empty">加载失败：' + B.esc(e.message) + "</p>";
+    });
+})();
+</script>
 </body>
 </html>

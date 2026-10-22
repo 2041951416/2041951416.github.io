@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>阅读 · 黄兴抗</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fafaf9'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23b87333' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">黄兴抗<span class="slash">/</span><em>嵌入式 &amp; PCB</em></a>
+    <nav class="nav">
+      <a href="index.html" data-page="index">概览</a>
+      <a href="plan.html" data-page="plan">学习计划</a>
+      <a href="notes.html" data-page="notes">知识点</a>
+      <a href="posts.html" data-page="posts">随笔</a>
+      <button class="theme-toggle" type="button" aria-label="切换主题">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main class="article-layout">
+  <div class="wrap" id="article-wrap">
+    <div class="article-head" id="head">
+      <div class="eyebrow" id="kind">Reading</div>
+      <h1 id="title">加载中…</h1>
+      <div class="article-meta" id="meta"></div>
+    </div>
+    <article class="prose" id="content"></article>
+  </div>
+  <aside class="toc" id="toc">
+    <div class="toc-inner">
+      <div class="toc-title">目录</div>
+      <ul id="toc-list"></ul>
+    </div>
+  </aside>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> 黄兴抗</span>
+    <span><a href="notes.html">知识点</a> · <a href="posts.html">随笔</a></span>
+  </div>
+</footer>
+
+<script src="https://fastly.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js"></script>
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  var B = window.Blog;
+  B.mountHeader(null);
+  B.mountFooter();
+
+  /* ---------- 标题 id 生成 ---------- */
+
+  function stripTags(html) {
+    var d = document.createElement("div");
+    d.innerHTML = html;
+    return (d.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function slugify(text) {
+    var s = String(text)
+      .toLowerCase()
+      .trim()
+      // 去掉标点与符号，保留中英文字母、数字、连字符、空格
+      .replace(/[^\w一-龥\- ]/g, "")
+      .replace(/\s+/g, "-");
+    if (!s) s = "section";
+    return s.slice(0, 60);
+  }
+
+  var headings = [];
+  var usedIds = Object.create(null);
+
+  function uniqueId(base) {
+    var id = base;
+    var n = 2;
+    while (usedIds[id]) {
+      id = base + "-" + n++;
+    }
+    usedIds[id] = true;
+    return id;
+  }
+
+  var renderer = {
+    heading: function (ctx) {
+      // marked v18: ({ tokens, depth })
+      var depth = ctx.depth;
+      var raw = this.parser.parseInline(ctx.tokens);
+      var text = stripTags(raw);
+      var id = uniqueId(slugify(text));
+      headings.push({ level: depth, text: text, id: id });
+      return (
+        "<h" + depth + ' id="' + B.esc(id) + '">' + raw + "</h" + depth + ">"
+      );
+    },
+  };
+
+  marked.use({ gfm: true, breaks: false, renderer: renderer });
+
+  /* ---------- 渲染 ---------- */
+
+  function mdToHtml(md) {
+    // 防御：不渲染内联脚本
+    var clean = String(md).replace(/<script[\s\S]*?<\/script>/gi, "");
+    return marked.parse(clean);
+  }
+
+  function renderToc() {
+    var list = document.getElementById("toc-list");
+    var toc = document.getElementById("toc");
+    list.innerHTML = "";
+
+    var items = headings.filter(function (h) {
+      return h.level === 2 || h.level === 3;
+    });
+
+    if (items.length < 3) {
+      toc.style.display = "none";
+      return;
+    }
+    toc.style.display = "";
+
+    items.forEach(function (h) {
+      var li = document.createElement("li");
+      if (h.level === 3) li.className = "lv3";
+      var a = document.createElement("a");
+      a.href = "#" + h.id;
+      a.textContent = h.text;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+  }
+
+  function showError(text) {
+    document.getElementById("head").innerHTML =
+      '<div class="eyebrow">Not Found</div><h1>找不到这篇文章</h1>';
+    document.getElementById("content").innerHTML =
+      '<p class="lede">' + B.esc(text) + "</p>" +
+      '<p><a href="posts.html">← 全部随笔</a> &nbsp; <a href="notes.html">全部知识点 →</a></p>';
+    document.getElementById("toc").style.display = "none";
+    document.title = "找不到文章 · 黄兴抗";
+  }
+
+  /* ---------- 兼容旧链接：post.html#slug → post.html?p=slug ---------- */
+
+  function migrateLegacyHash() {
+    if (location.search.indexOf("p=") >= 0) return false;
+    var h = decodeURIComponent(location.hash.replace(/^#/, "")).trim();
+    if (!h || /[^\w\-]/.test(h)) return false; // 不是 slug（含中文/标点的是页内锚点）
+    location.replace("post.html?p=" + encodeURIComponent(h));
+    return true;
+  }
+
+  /**
+   * 用 ?p=slug 路由，而不是 #slug。
+   * 原因：页内标题锚点也用 #，两者共用 hash 会互相覆盖 ——
+   * 点目录跳到 #某个标题 时会被当成"切换文章"，文章直接消失。
+   */
+  function getSlug() {
+    var m = /[?&]p=([^&]+)/.exec(location.search);
+    return m ? decodeURIComponent(m[1]).trim() : "";
+  }
+
+  function findEntry(manifest, slug) {
+    var hit = null;
+    (manifest.posts || []).forEach(function (p) {
+      if (p.slug === slug) hit = { kind: "post", entry: p };
+    });
+    if (hit) return hit;
+    (manifest.notes || []).forEach(function (n) {
+      if (n.slug === slug) hit = { kind: "note", entry: n };
+    });
+    return hit;
+  }
+
+  function load() {
+    var slug = getSlug();
+    var contentEl = document.getElementById("content");
+
+    if (!slug) {
+      showError("没有指定文章。请从列表里点进来。");
+      return;
+    }
+
+    B.getJson("content/index.json")
+      .then(function (manifest) {
+        var found = findEntry(manifest, slug);
+        if (!found) {
+          showError("清单里没有 「" + slug + "」 这篇文章。它可能已被删除或改名。");
+          return null;
+        }
+
+        var isNote = found.kind === "note";
+        var dir = isNote ? "content/notes/" : "content/posts/";
+        var e = found.entry;
+
+        return B.getText(dir + slug + ".md")
+          .then(function (raw) {
+            var parts = B.splitFrontMatter(raw);
+
+            var title = e.title || parts.meta.title || slug;
+            var tags = e.tags || parts.meta.tags || [];
+            var date = e.date || parts.meta.date || "";
+
+            headings = [];
+            usedIds = Object.create(null);
+            contentEl.innerHTML = mdToHtml(parts.body);
+            renderToc();
+
+            document.title = title + " · 黄兴抗";
+            document.getElementById("title").textContent = title;
+            document.getElementById("kind").textContent = isNote ? "Note" : "Post";
+
+            var metaHtml = "";
+            if (date) metaHtml += "<span>" + B.esc(B.fmtDateFull(date)) + "</span>";
+            if (tags.length) {
+              metaHtml +=
+                '<span class="tags" style="margin:0">' +
+                tags
+                  .map(function (t) {
+                    return '<span class="tag">' + B.esc(t) + "</span>";
+                  })
+                  .join("") +
+                "</span>";
+            }
+            document.getElementById("meta").innerHTML = metaHtml;
+
+            // 表格等宽内容在窄屏可横向滚动
+            B.$$("table", contentEl).forEach(function (t) {
+              if (!t.parentElement.classList.contains("table-scroll")) {
+                var d = document.createElement("div");
+                d.className = "table-scroll";
+                d.style.overflowX = "auto";
+                t.parentNode.insertBefore(d, t);
+                d.appendChild(t);
+              }
+            });
+
+            var back = document.createElement("p");
+            back.style.marginTop = "3rem";
+            back.innerHTML =
+              '<a href="' + (isNote ? "notes.html" : "posts.html") + '">← 返回列表</a>';
+            contentEl.appendChild(back);
+          })
+          .catch(function (e2) {
+            showError("读取正文失败：" + e2.message);
+          });
+      })
+      .catch(function (e) {
+        showError("加载清单失败：" + e.message);
+      });
+  }
+
+  // hash 完全留给页内标题锚点，不做路由，所以不监听 hashchange。
+
+  if (!migrateLegacyHash()) load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+# 纯静态站点：没有构建步骤，只是把仓库根目录整体上传为发布产物。
+# 每次 push 都会生成一份全新的 artifact，因此旧文件不会残留在线上。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一次部署；新推送排队而不是取消正在进行的部署，
+# 避免站点在中间状态停留。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 上传整个仓库根目录，与原 legacy 发布方式一致
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
